@@ -1,0 +1,63 @@
+name: Deploy Unified App to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+
+env:
+  AZURE_WEBAPP_NAME: 'apimarcas-dgf9axcbb2a2g5g5' # Cambiar si cambias el nombre en Azure
+  AZURE_WEBAPP_PACKAGE_PATH: './publish'
+  DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '20.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Preparar Node y compilar Frontend
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build React App
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          # Para la unificada, la API está en el mismo dominio, por lo que usamos rutas relativas
+          VITE_API_URL: '/api'
+
+      # 2. Preparar .NET y compilar Backend
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Build and Publish Backend
+        run: dotnet publish ./backend/Marcas.API/Marcas.API.csproj -c Release -o ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+      # 3. Mover el Frontend dentro del Backend
+      - name: Copy Frontend to wwwroot
+        run: |
+          mkdir -p ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/wwwroot
+          cp -r ./frontend/dist/* ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/wwwroot/
+
+      # 4. Desplegar todo a Azure
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}

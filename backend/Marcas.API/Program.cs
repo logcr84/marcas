@@ -70,6 +70,14 @@ app.UseHttpsRedirection();
 app.UseCors("PortalPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ── Habilitar archivos estáticos para React ───────────────────
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapControllers();
+
+// ── Redirigir cualquier ruta no encontrada al index de React ──
+app.MapFallbackToFile("index.html");
 
 app.Run();
