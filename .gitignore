@@ -1,0 +1,24 @@
+# .NET Core
+bin/
+obj/
+publish/
+
+# Node
+node_modules/
+dist/
+.env
+
+# OS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.user
+*.suo
+
+# DB/Temp
+local.db
+local.db-shm
+local.db-wal
+backend.zip

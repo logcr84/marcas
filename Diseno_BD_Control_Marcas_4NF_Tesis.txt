@@ -1,0 +1,217 @@
+  Diseño de Base de Datos SQL Normalizada a 4NF Sistema de Control de Marcas con Justificaciones, Portal Web y Archivo Histórico 
+Documento técnico para tesis de Bachiller universitario Propuesta para una empresa de 1 600 empleados Autor: Héctor Rodríguez Alfaro Fecha: 13 de julio de 2026
+
+Figura 1. Arquitectura general propuesta.
+
+Resumen ejecutivo
+El presente documento propone el diseño de una base de datos SQL para controlar marcas de asistencia de una empresa con aproximadamente 1 600 empleados. El sistema contempla captura desde un agente instalado en cada computador, integración con un portal web para reportes de hasta seis meses y un mecanismo de traslado posterior a tablas históricas. La solución se normaliza hasta Cuarta Forma Normal (4NF), separando hechos independientes como empleados, computadores, marcas, turnos, roles y justificaciones.
+Alcance
+Se documentan objetivos, supuestos, requisitos, modelo lógico, normalización, diccionario de datos, SQL DDL base, índices, seguridad, auditoría, retención y recomendaciones de implementación. El diseño se plantea para SQL Server por su adopción usual en ambientes Windows corporativos, pero la estructura relacional puede adaptarse a PostgreSQL u otro motor SQL.
+Nota para tesis: en Microsoft Word se recomienda actualizar la tabla de contenido automática después de abrir el documento: Referencias > Tabla de contenido > Actualizar tabla.
+1. Planteamiento del problema
+La empresa requiere registrar entradas, salidas y eventos relacionados con asistencia mediante un agente local por computador. La información debe estar disponible para consultas operativas recientes, permitir justificaciones ante incidencias y conservar trazabilidad para auditoría y reportes de RR. HH.
+Necesidad
+Decisión de diseño
+1 600 empleados
+Modelo transaccional con índices por empleado, fecha y tipo de marca.
+Reportes de máximo 6 meses
+Restricción en procedimientos y portal; archivo mensual a históricos.
+Justificaciones
+Entidad independiente con motivos, texto libre, estado, aprobador y fechas.
+Agente en cada computador
+Entidad Computador y AgenteInstalado separadas para inventario y trazabilidad.
+Tesis universitaria
+Documentación formal: requisitos, normalización, ERD, DDL, seguridad y pruebas.
+2. Objetivos
+Diseñar una base de datos SQL robusta para el registro de marcas de asistencia.
+Garantizar que el modelo lógico cumpla 1NF, 2NF, 3NF, BCNF y 4NF.
+Permitir justificaciones asociadas a una marca específica o a un rango de fechas.
+Integrar captura por agente, API y portal web de reportes.
+Definir estrategia de retención: datos activos por seis meses y traslado a histórico.
+3. Arquitectura funcional
+
+Figura 2. Componentes funcionales del sistema.
+El agente local no escribe directamente en la base de datos. Envía eventos a una API segura que valida token, dispositivo, empleado, duplicados e idempotencia; posteriormente inserta la marca con fecha y hora del servidor. El portal web consume vistas y procedimientos almacenados para reportes, garantizando el límite de seis meses.
+
+Figura 3. Flujo de registro y justificación.
+4. Modelo lógico normalizado
+
+Figura 4. ERD resumido de entidades principales.
+Las entidades se agrupan en cuatro dominios: organización, captura de marcas, gestión de justificaciones y seguridad/auditoría. La separación evita atributos repetitivos y dependencias multivaluadas independientes dentro de una misma relación.
+Entidad
+Propósito
+rrhh.Empleado
+Catálogo maestro de empleados. No contiene teléfonos, roles, turnos ni marcas repetidas.
+rrhh.Departamento / Puesto
+Estructura organizacional y cargos.
+asistencia.Marca
+Hecho transaccional atómico: un evento de marca realizado por un empleado.
+asistencia.Justificacion
+Explicación formal de una anomalía o marca faltante; puede vincularse a Marca o a un periodo.
+asistencia.Turno y AsignacionTurno
+Turnos definidos independientemente y asignaciones por vigencia.
+infra.Computador / AgenteInstalado
+Inventario técnico relacionado con la captura desde cada PC.
+seguridad.UsuarioWeb, Rol, UsuarioRol
+Control de acceso al portal con relación N:M descompuesta.
+auditoria.EventoAuditoria
+Trazabilidad de operaciones sensibles.
+5. Normalización hasta Cuarta Forma Normal (4NF)
+La 4NF exige que, además de cumplir BCNF, no existan dependencias multivaluadas no triviales excepto cuando el determinante sea una superclave. En este diseño cada tabla representa un solo tema de negocio y las listas independientes se separan en tablas propias.
+Forma normal
+Aplicación en el diseño
+1NF
+Atributos atómicos: cada marca es una fila; no existen columnas Marca1, Marca2 ni listas en un campo.
+2NF
+Las tablas con clave compuesta, como UsuarioRol, no tienen atributos que dependan solo de una parte de la clave.
+3NF
+Datos descriptivos como nombre de departamento, puesto o motivo no se repiten en Marca.
+BCNF
+Las dependencias funcionales relevantes tienen como determinante una clave candidata.
+4NF
+Relaciones independientes N:M se separan: UsuarioRol, AsignacionTurno, EmpleadoContacto opcional, ComputadorAgente.
+Ejemplo de riesgo evitado: si una tabla Empleado contuviera múltiples roles web y múltiples turnos históricos, se produciría una combinación artificial rol × turno. En 4NF se separan UsuarioRol y AsignacionTurno, eliminando redundancia y anomalías de actualización.
+6. Diccionario de datos resumido
+Campo
+Tipo
+Regla
+Descripción
+EmpleadoID
+BIGINT
+PK, identidad
+Identificador interno del empleado.
+CodigoEmpleado
+VARCHAR(30)
+Único, no nulo
+Código corporativo usado por RR. HH.
+MarcaID
+BIGINT
+PK, identidad
+Identificador de marca.
+FechaHoraServidor
+DATETIME2(0)
+No nulo
+Hora oficial registrada por la API/servidor.
+FechaHoraCliente
+DATETIME2(0)
+Nulo
+Hora reportada por el agente; solo referencia.
+IdempotencyKey
+UNIQUEIDENTIFIER
+Único
+Evita doble inserción ante reintentos del agente.
+TextoJustificacion
+NVARCHAR(1000)
+No nulo
+Espacio narrativo para aclaraciones.
+EstadoJustificacion
+VARCHAR(20)
+CHECK
+Pendiente, aprobada, rechazada o anulada.
+FechaInicio / FechaFin
+DATE
+Según entidad
+Vigencia de asignación o periodo justificado.
+7. Script SQL base sugerido
+El siguiente DDL es un punto de partida compatible con SQL Server. En una implementación real se deben ajustar nombres de dominio, catálogos de estados, collation, cifrado, backups y política institucional.
+-- Esquemas CREATE SCHEMA rrhh; GO CREATE SCHEMA infra; GO CREATE SCHEMA asistencia; GO CREATE SCHEMA seguridad; GO CREATE SCHEMA historico; GO CREATE SCHEMA auditoria; GO  CREATE TABLE rrhh.Departamento (     DepartamentoID      INT IDENTITY(1,1) PRIMARY KEY,     Nombre              NVARCHAR(120) NOT NULL UNIQUE,     DepartamentoPadreID INT NULL,     Estado              VARCHAR(15) NOT NULL DEFAULT 'ACTIVO',     CONSTRAINT FK_Departamento_Padre         FOREIGN KEY (DepartamentoPadreID) REFERENCES rrhh.Departamento(DepartamentoID) );  CREATE TABLE rrhh.Puesto (     PuestoID INT IDENTITY(1,1) PRIMARY KEY,     Nombre   NVARCHAR(120) NOT NULL UNIQUE,     Estado   VARCHAR(15) NOT NULL DEFAULT 'ACTIVO' );  CREATE TABLE rrhh.Empleado (     EmpleadoID      BIGINT IDENTITY(1,1) PRIMARY KEY,     CodigoEmpleado  VARCHAR(30) NOT NULL UNIQUE,     Identificacion  VARCHAR(30) NOT NULL UNIQUE,     Nombre          NVARCHAR(80) NOT NULL,     PrimerApellido  NVARCHAR(80) NOT NULL,     SegundoApellido NVARCHAR(80) NULL,     DepartamentoID  INT NOT NULL,     PuestoID        INT NOT NULL,     FechaIngreso    DATE NOT NULL,     Estado          VARCHAR(15) NOT NULL DEFAULT 'ACTIVO',     CONSTRAINT FK_Empleado_Departamento FOREIGN KEY (DepartamentoID) REFERENCES rrhh.Departamento(DepartamentoID),     CONSTRAINT FK_Empleado_Puesto FOREIGN KEY (PuestoID) REFERENCES rrhh.Puesto(PuestoID),     CONSTRAINT CK_Empleado_Estado CHECK (Estado IN ('ACTIVO','INACTIVO','SUSPENDIDO')) );  CREATE TABLE infra.Computador (     ComputadorID BIGINT IDENTITY(1,1) PRIMARY KEY,     AssetTag     VARCHAR(60) NOT NULL UNIQUE,     NombreHost   VARCHAR(120) NOT NULL UNIQUE,     DireccionMAC VARCHAR(40) NULL,     Estado       VARCHAR(15) NOT NULL DEFAULT 'ACTIVO' );  CREATE TABLE infra.AgenteInstalado (     AgenteID        BIGINT IDENTITY(1,1) PRIMARY KEY,     ComputadorID    BIGINT NOT NULL,     VersionAgente   VARCHAR(30) NOT NULL,     FechaInstalacion DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),     UltimoHeartbeat DATETIME2(0) NULL,     Estado          VARCHAR(15) NOT NULL DEFAULT 'ACTIVO',     CONSTRAINT FK_Agente_Computador FOREIGN KEY (ComputadorID) REFERENCES infra.Computador(ComputadorID) );  CREATE TABLE asistencia.TipoMarca (     TipoMarcaID TINYINT IDENTITY(1,1) PRIMARY KEY,     Codigo      VARCHAR(20) NOT NULL UNIQUE,     Nombre      NVARCHAR(80) NOT NULL,     OrdenDia    TINYINT NOT NULL,     Estado      VARCHAR(15) NOT NULL DEFAULT 'ACTIVO' );  CREATE TABLE asistencia.Turno (     TurnoID INT IDENTITY(1,1) PRIMARY KEY,     Nombre NVARCHAR(100) NOT NULL UNIQUE,     ToleranciaEntradaMin SMALLINT NOT NULL DEFAULT 0,     ToleranciaSalidaMin  SMALLINT NOT NULL DEFAULT 0,     Estado VARCHAR(15) NOT NULL DEFAULT 'ACTIVO' );  CREATE TABLE asistencia.AsignacionTurno (     AsignacionTurnoID BIGINT IDENTITY(1,1) PRIMARY KEY,     EmpleadoID BIGINT NOT NULL,     TurnoID INT NOT NULL,     FechaInicio DATE NOT NULL,     FechaFin DATE NULL,     CONSTRAINT FK_AsigTurno_Empleado FOREIGN KEY (EmpleadoID) REFERENCES rrhh.Empleado(EmpleadoID),     CONSTRAINT FK_AsigTurno_Turno FOREIGN KEY (TurnoID) REFERENCES asistencia.Turno(TurnoID),     CONSTRAINT CK_AsigTurno_Fechas CHECK (FechaFin IS NULL OR FechaFin >= FechaInicio) );  CREATE TABLE asistencia.Marca (     MarcaID BIGINT IDENTITY(1,1) PRIMARY KEY,     EmpleadoID BIGINT NOT NULL,     TipoMarcaID TINYINT NOT NULL,     AgenteID BIGINT NULL,     FechaHoraServidor DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),     FechaHoraCliente  DATETIME2(0) NULL,     IdempotencyKey UNIQUEIDENTIFIER NOT NULL,     EstadoMarca VARCHAR(20) NOT NULL DEFAULT 'VALIDA',     ObservacionTecnica NVARCHAR(500) NULL,     CONSTRAINT FK_Marca_Empleado FOREIGN KEY (EmpleadoID) REFERENCES rrhh.Empleado(EmpleadoID),     CONSTRAINT FK_Marca_Tipo FOREIGN KEY (TipoMarcaID) REFERENCES asistencia.TipoMarca(TipoMarcaID),     CONSTRAINT FK_Marca_Agente FOREIGN KEY (AgenteID) REFERENCES infra.AgenteInstalado(AgenteID),     CONSTRAINT UQ_Marca_Idempotency UNIQUE (IdempotencyKey),     CONSTRAINT CK_Marca_Estado CHECK (EstadoMarca IN ('VALIDA','ANULADA','PENDIENTE_REVISION')) );  CREATE TABLE asistencia.MotivoJustificacion (     MotivoID SMALLINT IDENTITY(1,1) PRIMARY KEY,     Codigo VARCHAR(30) NOT NULL UNIQUE,     Descripcion NVARCHAR(150) NOT NULL,     RequiereAprobacion BIT NOT NULL DEFAULT 1,     Estado VARCHAR(15) NOT NULL DEFAULT 'ACTIVO' );  CREATE TABLE asistencia.Justificacion (     JustificacionID BIGINT IDENTITY(1,1) PRIMARY KEY,     EmpleadoID BIGINT NOT NULL,     MarcaID BIGINT NULL,     MotivoID SMALLINT NOT NULL,     FechaInicio DATE NOT NULL,     FechaFin DATE NOT NULL,     TextoJustificacion NVARCHAR(1000) NOT NULL,     EstadoJustificacion VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',     FechaSolicitud DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),     AprobadorEmpleadoID BIGINT NULL,     FechaResolucion DATETIME2(0) NULL,     ComentarioResolucion NVARCHAR(1000) NULL,     CONSTRAINT FK_Just_Empleado FOREIGN KEY (EmpleadoID) REFERENCES rrhh.Empleado(EmpleadoID),     CONSTRAINT FK_Just_Marca FOREIGN KEY (MarcaID) REFERENCES asistencia.Marca(MarcaID),     CONSTRAINT FK_Just_Motivo FOREIGN KEY (MotivoID) REFERENCES asistencia.MotivoJustificacion(MotivoID),     CONSTRAINT FK_Just_Aprobador FOREIGN KEY (AprobadorEmpleadoID) REFERENCES rrhh.Empleado(EmpleadoID),     CONSTRAINT CK_Just_Fechas CHECK (FechaFin >= FechaInicio),     CONSTRAINT CK_Just_Estado CHECK (EstadoJustificacion IN ('PENDIENTE','APROBADA','RECHAZADA','ANULADA')) );  CREATE TABLE seguridad.UsuarioWeb (     UsuarioID BIGINT IDENTITY(1,1) PRIMARY KEY,     EmpleadoID BIGINT NULL,     Login VARCHAR(120) NOT NULL UNIQUE,     HashPassword VARBINARY(256) NULL,     Estado VARCHAR(15) NOT NULL DEFAULT 'ACTIVO',     CONSTRAINT FK_Usuario_Empleado FOREIGN KEY (EmpleadoID) REFERENCES rrhh.Empleado(EmpleadoID) );  CREATE TABLE seguridad.Rol (     RolID SMALLINT IDENTITY(1,1) PRIMARY KEY,     Nombre VARCHAR(60) NOT NULL UNIQUE,     Descripcion NVARCHAR(150) NULL );  CREATE TABLE seguridad.UsuarioRol (     UsuarioID BIGINT NOT NULL,     RolID SMALLINT NOT NULL,     PRIMARY KEY (UsuarioID, RolID),     CONSTRAINT FK_UsuarioRol_Usuario FOREIGN KEY (UsuarioID) REFERENCES seguridad.UsuarioWeb(UsuarioID),     CONSTRAINT FK_UsuarioRol_Rol FOREIGN KEY (RolID) REFERENCES seguridad.Rol(RolID) );  CREATE TABLE auditoria.EventoAuditoria (     EventoID BIGINT IDENTITY(1,1) PRIMARY KEY,     UsuarioID BIGINT NULL,     Entidad VARCHAR(80) NOT NULL,     EntidadID BIGINT NULL,     Accion VARCHAR(40) NOT NULL,     FechaEvento DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),     IpOrigen VARCHAR(45) NULL,     Detalle NVARCHAR(2000) NULL );  -- Índices operativos principales CREATE INDEX IX_Marca_Empleado_Fecha ON asistencia.Marca (EmpleadoID, FechaHoraServidor DESC) INCLUDE (TipoMarcaID, EstadoMarca); CREATE INDEX IX_Marca_Fecha ON asistencia.Marca (FechaHoraServidor DESC); CREATE INDEX IX_Justificacion_Empleado_Fecha ON asistencia.Justificacion (EmpleadoID, FechaInicio, FechaFin); CREATE INDEX IX_Justificacion_Estado ON asistencia.Justificacion (EstadoJustificacion, FechaSolicitud DESC); GO 
+8. Reportes web y regla de máximo seis meses
+Los reportes deben ejecutarse mediante procedimientos almacenados o servicios backend que validen el rango de fechas. La base de datos puede reforzar esta regla en procedimientos, vistas parametrizadas desde la API y controles del portal. Para consultas históricas se recomienda una opción separada con permisos especiales.
+CREATE OR ALTER PROCEDURE asistencia.sp_ReporteMarcasEmpleado     @EmpleadoID BIGINT,     @FechaInicio DATE,     @FechaFin DATE AS BEGIN     SET NOCOUNT ON;      IF DATEDIFF(DAY, @FechaInicio, @FechaFin) > 183         THROW 50001, 'El reporte no puede superar seis meses.', 1;      SELECT m.MarcaID, e.CodigoEmpleado, m.FechaHoraServidor,            tm.Codigo AS TipoMarca, m.EstadoMarca,            j.EstadoJustificacion, j.TextoJustificacion     FROM asistencia.Marca m     JOIN rrhh.Empleado e ON e.EmpleadoID = m.EmpleadoID     JOIN asistencia.TipoMarca tm ON tm.TipoMarcaID = m.TipoMarcaID     LEFT JOIN asistencia.Justificacion j ON j.MarcaID = m.MarcaID     WHERE m.EmpleadoID = @EmpleadoID       AND m.FechaHoraServidor >= @FechaInicio       AND m.FechaHoraServidor < DATEADD(DAY, 1, @FechaFin)     ORDER BY m.FechaHoraServidor DESC; END; GO 
+9. Estrategia de históricos
+
+Figura 5. Ciclo de archivo de marcas.
+Se recomienda ejecutar un proceso mensual que mueva marcas y justificaciones cerradas con antigüedad mayor a seis meses. El proceso debe usar transacciones, bitácora y validación de conteos antes de eliminar de tablas activas. En SQL Server Enterprise puede evaluarse particionamiento por fecha; en ediciones sin particionamiento, tablas históricas por mes o año pueden ser suficientes.
+Opción
+Ventaja
+Consideración
+Particionamiento por FechaHoraServidor
+Mantenimiento rápido por cambio de partición.
+Requiere diseño físico y edición/licenciamiento compatible.
+Tablas historico.MarcaHistorico
+Simple de comprender y documentar en tesis.
+Se debe cuidar integridad y consultas consolidadas.
+Base de datos histórica separada
+Aísla carga operativa.
+Mayor complejidad de seguridad y backups.
+10. Seguridad, auditoría y rendimiento
+El agente debe autenticarse con certificado, token o clave rotada; nunca con credenciales directas de SQL.
+La API debe registrar idempotency key para evitar duplicados si el agente reintenta envíos.
+El portal debe usar roles; por ejemplo: RRHH_ADMIN, JEFATURA, AUDITOR, EMPLEADO_CONSULTA.
+Usar cifrado en tránsito (TLS) y cifrado/mascaramiento para datos sensibles según política institucional.
+Planificar backups, pruebas de restauración y monitoreo de crecimiento mensual.
+Índices principales: empleado-fecha, fecha global, estado de justificación y claves únicas de catálogos.
+11. Estimación de volumen
+Con 1 600 empleados y cuatro marcas diarias promedio, el sistema recibiría aproximadamente 6 400 marcas por día hábil. En seis meses laborales se proyectan cerca de 768 000 a 1 150 000 filas, según calendario y cantidad de eventos adicionales. Este volumen es moderado para SQL Server si se aplican índices, mantenimiento y archivo.
+Supuesto
+Valor estimado
+Empleados
+1 600
+Marcas por empleado por día
+4
+Eventos diarios
+6 400
+Días aproximados de seis meses
+120 a 180
+Filas activas esperadas
+768 000 a 1 152 000
+12. Plan de pruebas sugerido
+Prueba
+Resultado esperado
+Inserción de marca válida
+Se crea una fila en asistencia.Marca con fecha del servidor.
+Reintento con mismo IdempotencyKey
+La base rechaza duplicado o la API retorna la marca existente.
+Justificación sin texto
+Debe fallar por NOT NULL y validación de negocio.
+Reporte de más de seis meses
+El procedimiento debe devolver error controlado.
+Empleado con dos roles y dos turnos históricos
+No se multiplican filas artificialmente; relaciones separadas cumplen 4NF.
+Archivo mensual
+Conteo activo + histórico coincide con conteo antes de traslado.
+13. Estructura recomendada para la tesis
+Capítulo I: Introducción, problema, justificación, objetivos y alcance.
+Capítulo II: Marco teórico: bases de datos relacionales, normalización, 4NF, seguridad y auditoría.
+Capítulo III: Metodología: levantamiento de requisitos, modelado, diseño lógico y físico.
+Capítulo IV: Propuesta: arquitectura, modelo ER, diccionario de datos, SQL, portal y agente.
+Capítulo V: Validación: pruebas, estimación de volumen, reglas de negocio, desempeño y seguridad.
+Capítulo VI: Conclusiones y recomendaciones.
+14. Referencias bibliográficas sugeridas
+Date, C. J. (2019). Database Design and Relational Theory. Apress.
+Elmasri, R., & Navathe, S. (2016). Fundamentals of Database Systems. Pearson.
+Silberschatz, A., Korth, H. F., & Sudarshan, S. (2020). Database System Concepts. McGraw-Hill.
+Microsoft. SQL Server documentation: Database Engine, indexes, constraints, security and stored procedures.
+Kent, W. (1983). A Simple Guide to Five Normal Forms in Relational Database Theory. Communications of the ACM.
+Anexo A. Reglas de negocio principales
+Una marca pertenece a un único empleado y a un único tipo de marca.
+Una justificación pertenece a un empleado y puede referenciar una marca; si la marca no existe, justifica un periodo.
+Una marca no debe depender de la hora del computador cliente; la hora oficial es del servidor.
+Las consultas operativas del portal no deben exceder seis meses.
+Las relaciones multivaluadas independientes se resuelven mediante tablas puente o tablas de vigencia.
+Anexo B. Campos recomendados para pantalla de justificación
+Campo
+Tipo de UI
+Validación
+Empleado
+Selector / autocompletado
+Activo y visible según permisos.
+Marca asociada
+Selector opcional
+Debe pertenecer al empleado.
+Motivo
+Lista
+Catálogo activo.
+Fecha inicio / fin
+Fecha
+Fin >= inicio.
+Texto de justificación
+Área de texto
+Obligatorio, máximo 1000 caracteres.
+Adjuntos
+Carga opcional
+Validar extensión, tamaño y antivirus.
+Estado
+Etiqueta
+Pendiente/aprobada/rechazada/anulada.
+
