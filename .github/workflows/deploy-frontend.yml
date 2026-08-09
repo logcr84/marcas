@@ -1,0 +1,44 @@
+name: Deploy Frontend to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+env:
+  AZURE_WEBAPP_NAME: 'mi-app-frontend-marcas' # Cambiar por el nombre de tu App Service de Azure para React
+  AZURE_WEBAPP_PACKAGE_PATH: './frontend/dist'
+  NODE_VERSION: '20.x'
+  VITE_API_URL: 'https://mi-app-backend-marcas.azurewebsites.net/api/marcas' # Cambiar por la URL real de producción
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build React App
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ env.VITE_API_URL }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
