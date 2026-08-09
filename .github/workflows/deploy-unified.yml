@@ -9,7 +9,7 @@ on:
       - 'frontend/**'
 
 env:
-  AZURE_WEBAPP_NAME: 'apimarcas-dgf9axcbb2a2g5g5' # Cambiar si cambias el nombre en Azure
+  AZURE_WEBAPP_NAME: 'marcas'
   AZURE_WEBAPP_PACKAGE_PATH: './publish'
   DOTNET_VERSION: '10.0.x'
   NODE_VERSION: '20.x'
