@@ -64,11 +64,15 @@ jobs:
           echo "Zip creado: $(du -sh ../deploy.zip | cut -f1)"
 
       - name: Deploy to Azure via Zip Deploy
+        env:
+          KUDU_USER: ${{ secrets.AZURE_KUDU_USER }}
+          KUDU_PASSWORD: ${{ secrets.AZURE_KUDU_PASSWORD }}
         run: |
           echo "Desplegando a Azure App Service..."
           HTTP_STATUS=$(curl -s -o /tmp/deploy_response.txt -w "%{http_code}" \
             -X POST \
-            "https://${{ secrets.AZURE_KUDU_USER }}:${{ secrets.AZURE_KUDU_PASSWORD }}@marcas-bpcnehf0g3hshabm.scm.canadacentral-01.azurewebsites.net/api/zipdeploy?isAsync=false" \
+            -u "$KUDU_USER:$KUDU_PASSWORD" \
+            "https://marcas-bpcnehf0g3hshabm.scm.canadacentral-01.azurewebsites.net/api/zipdeploy?isAsync=false" \
             --data-binary @./deploy.zip \
             -H "Content-Type: application/octet-stream")
           echo "HTTP Status: $HTTP_STATUS"
