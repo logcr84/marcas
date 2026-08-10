@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: 'marcas-bpcnehf0g3hshabm'
+  AZURE_WEBAPP_NAME: 'marcas'
   AZURE_WEBAPP_PACKAGE_PATH: './publish'
   DOTNET_VERSION: '10.0.x'
   NODE_VERSION: '20.x'
@@ -56,30 +56,11 @@ jobs:
           mkdir -p ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/wwwroot
           cp -r ./frontend/dist/* ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/wwwroot/
 
-      # 4. Empaquetar y desplegar a Azure via Zip Deploy (Kudu API)
-      - name: Create deployment zip
-        run: |
-          cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-          zip -r ../deploy.zip .
-          echo "Zip creado: $(du -sh ../deploy.zip | cut -f1)"
-
-      - name: Deploy to Azure via Zip Deploy
-        env:
-          KUDU_USER: ${{ secrets.AZURE_KUDU_USER }}
-          KUDU_PASSWORD: ${{ secrets.AZURE_KUDU_PASSWORD }}
-        run: |
-          echo "Desplegando a Azure App Service..."
-          HTTP_STATUS=$(curl -s -o /tmp/deploy_response.txt -w "%{http_code}" \
-            -X POST \
-            -u "$KUDU_USER:$KUDU_PASSWORD" \
-            "https://marcas-bpcnehf0g3hshabm.scm.canadacentral-01.azurewebsites.net/api/zipdeploy?isAsync=false" \
-            --data-binary @./deploy.zip \
-            -H "Content-Type: application/octet-stream")
-          echo "HTTP Status: $HTTP_STATUS"
-          cat /tmp/deploy_response.txt
-          if [ "$HTTP_STATUS" -ne 200 ]; then
-            echo "Error en el despliegue. Status: $HTTP_STATUS"
-            exit 1
-          fi
-          echo "¡Despliegue exitoso!"
+      # 4. Desplegar todo a Azure
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
