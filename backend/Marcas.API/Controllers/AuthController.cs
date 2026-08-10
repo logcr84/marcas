@@ -27,20 +27,32 @@ public class AuthController : ControllerBase
     [ProducesResponseType(401)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var usuario = await _usuarios.ObtenerPorLoginAsync(request.Login);
-        if (usuario is null || usuario.HashPassword is null)
-            return Unauthorized(new { mensaje = "Credenciales inválidas." });
+        try 
+        {
+            var usuario = await _usuarios.ObtenerPorLoginAsync(request.Login);
+            if (usuario is null || usuario.HashPassword is null)
+                return Unauthorized(new { mensaje = "Credenciales inválidas." });
 
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, usuario.HashPassword))
-            return Unauthorized(new { mensaje = "Credenciales inválidas." });
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, usuario.HashPassword))
+                return Unauthorized(new { mensaje = "Credenciales inválidas." });
 
-        await _usuarios.ActualizarUltimoAccesoAsync(usuario.UsuarioID);
+            await _usuarios.ActualizarUltimoAccesoAsync(usuario.UsuarioID);
 
-        var token = GenerarToken(usuario.UsuarioID, usuario.Login, usuario.EmpleadoID, usuario.Roles);
-        var expiracion = DateTime.UtcNow.AddHours(
-            _config.GetValue<int>("JwtSettings:ExpirationHours", 8));
+            var token = GenerarToken(usuario.UsuarioID, usuario.Login, usuario.EmpleadoID, usuario.Roles);
+            var expiracion = DateTime.UtcNow.AddHours(
+                _config.GetValue<int>("JwtSettings:ExpirationHours", 8));
 
-        return Ok(new LoginResponse(token, expiracion, usuario.Login, usuario.Roles, usuario.EmpleadoID));
+            return Ok(new LoginResponse(token, expiracion, usuario.Login, usuario.Roles, usuario.EmpleadoID));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { 
+                mensaje = "Error interno del servidor", 
+                error = ex.Message, 
+                stackTrace = ex.StackTrace,
+                innerException = ex.InnerException?.Message 
+            });
+        }
     }
 
     private string GenerarToken(long usuarioId, string login, long? empleadoId, List<string> roles)
