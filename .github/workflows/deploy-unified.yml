@@ -9,7 +9,7 @@ on:
       - 'frontend/**'
 
 env:
-  AZURE_WEBAPP_NAME: 'marcas'
+  AZURE_WEBAPP_NAME: 'marcas-bpcnehf0g3hshabm'
   AZURE_WEBAPP_PACKAGE_PATH: './publish'
   DOTNET_VERSION: '10.0.x'
   NODE_VERSION: '20.x'
