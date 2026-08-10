@@ -7,6 +7,8 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
 
 env:
   AZURE_WEBAPP_NAME: 'marcas-bpcnehf0g3hshabm'
