@@ -58,20 +58,29 @@ public class TrayApplicationContext : ApplicationContext
         menu.ForeColor = Color.White;
         menu.Font      = new System.Drawing.Font("Segoe UI", 9f);
 
-        // Accesos directos a marcas más comunes
-        menu.Items.Add("🟢  Entrada al Trabajo",    null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(1, "Manual: Entrada"));
-        menu.Items.Add("🟡  Salida a Almuerzo",     null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(2, "Manual: Salida Almuerzo"));
-        menu.Items.Add("🔵  Regreso de Almuerzo",   null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(3, "Manual: Regreso Almuerzo"));
-        menu.Items.Add("🔴  Salida del Trabajo",    null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(4, "Manual: Salida"));
+        // Accesos directos a marcas más comunes (terminología CR)
+        menu.Items.Add("🟢  Entrada al trabajo",       null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(1,  "Manual: Entrada"));
+        menu.Items.Add("☕  Salida café — mañana",      null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(2,  "Manual: Café mañana"));
+        menu.Items.Add("☕  Regreso café — mañana",     null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(3,  "Manual: Regreso café mañana"));
+        menu.Items.Add("🍽️  Salida a almuerzo",          null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(4,  "Manual: Almuerzo"));
+        menu.Items.Add("🍽️  Regreso de almuerzo",        null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(5,  "Manual: Regreso almuerzo"));
+        menu.Items.Add("☕  Salida café — tarde",        null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(6,  "Manual: Café tarde"));
+        menu.Items.Add("☕  Regreso café — tarde",       null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(7,  "Manual: Regreso café tarde"));
+        menu.Items.Add("🔴  Salida del trabajo",        null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(8,  "Manual: Salida"));
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("📋  Todas las opciones...", null, (s, e) => AbrirFormMarcas());
+        menu.Items.Add("📋  Salida en comisión",        null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(9,  "Manual: Comisión"));
+        menu.Items.Add("📋  Regreso de comisión",       null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(10, "Manual: Regreso comisión"));
+        menu.Items.Add("🏥  Salida médica — CCSS",      null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(11, "Manual: Médico CCSS"));
+        menu.Items.Add("🏥  Regreso cita médica",       null, async (s, e) => await _marcaManualService.RegistrarMarcaManualAsync(12, "Manual: Regreso médico"));
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("ℹ  Estado: Activo",         null, (s, e) => { /* Informativo */ });
-        menu.Items.Add("🔄  Sincronizar ahora",     null, (s, e) =>
+        menu.Items.Add("📋  Todas las opciones...",     null, (s, e) => AbrirFormMarcas());
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("ℹ  Estado: Activo",             null, (s, e) => { /* Informativo */ });
+        menu.Items.Add("🔄  Sincronizar ahora",         null, (s, e) =>
             MessageBox.Show("El agente sincronizará en la próxima ronda automática (≤10 seg).",
                 "Agente Marcas", MessageBoxButtons.OK, MessageBoxIcon.Information));
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("❌  Salir",                 null, Exit);
+        menu.Items.Add("❌  Salir",                     null, Exit);
 
         return menu;
     }

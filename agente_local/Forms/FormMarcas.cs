@@ -15,17 +15,51 @@ public class FormMarcas : Form
     private readonly MarcaManualService _marcaService;
     private Label _lblEstado = null!;
 
-    // Tipos de marca con su ID, ícono emoji y color
-    private static readonly (byte Id, string Emoji, string Nombre, Color Color)[] TiposMarca =
+    // ──────────────────────────────────────────────────────────────────────────
+    // Tipos de marca alineados a la Ley Marco de Empleo Público (Ley 10159)
+    // y el Código de Trabajo de Costa Rica.
+    //
+    //  ID  Código                  Descripción legal
+    //   1  ENTRADA                 Art. 136 CT: inicio jornada
+    //   2  SALIDA_CAFE_MANANA      Art. 138 CT: descanso mañana (15-20 min)
+    //   3  REGRESO_CAFE_MANANA
+    //   4  SALIDA_ALMUERZO         Art. 136 CT: tiempo de comida (máx. 1 h)
+    //   5  REGRESO_ALMUERZO
+    //   6  SALIDA_CAFE_TARDE       Art. 138 CT: descanso tarde (15-20 min)
+    //   7  REGRESO_CAFE_TARDE
+    //   8  SALIDA                  Fin de jornada
+    //   9  SALIDA_COMISION         Art. 33 Ley 10159: comisión institucional
+    //  10  REGRESO_COMISION
+    //  11  SALIDA_MEDICA           Art. 79 CT: cita médica CCSS
+    //  12  REGRESO_MEDICA
+    // ──────────────────────────────────────────────────────────────────────────
+    private static readonly (byte Id, string Emoji, string Nombre, string Detalle, Color Color)[] TiposMarca =
     [
-        (1, "🟢", "Entrada al Trabajo",     Color.FromArgb(34, 197, 94)),
-        (2, "🟡", "Salida a Almuerzo",       Color.FromArgb(234, 179, 8)),
-        (3, "🔵", "Regreso de Almuerzo",     Color.FromArgb(59, 130, 246)),
-        (4, "🔴", "Salida del Trabajo",      Color.FromArgb(239, 68, 68)),
-        (5, "⚪", "Pausa / Break Corto",     Color.FromArgb(156, 163, 175)),
-        (6, "🟠", "Salida a Reunión",        Color.FromArgb(249, 115, 22)),
-        (7, "🟣", "Regreso de Reunión",      Color.FromArgb(168, 85, 247)),
+        // ── Jornada ──────────────────────────────────────────────────
+        (1,  "🟢", "Entrada al trabajo",        "Inicio de jornada laboral",         Color.FromArgb(34,  197, 94)),
+        (8,  "🔴", "Salida del trabajo",         "Fin de jornada laboral",            Color.FromArgb(239, 68,  68)),
+
+        // ── Café de mañana (Art. 138 CT) ─────────────────────────────
+        (2,  "☕", "Salida café — mañana",       "Descanso de mañana (~15-20 min)",   Color.FromArgb(180, 120, 60)),
+        (3,  "☕", "Regreso café — mañana",      "Regreso del descanso de mañana",    Color.FromArgb(120, 85,  45)),
+
+        // ── Almuerzo (Art. 136 CT) ────────────────────────────────────
+        (4,  "🍽️","Salida a almuerzo",           "Tiempo de comida (máx. 1 hora)",    Color.FromArgb(234, 179, 8)),
+        (5,  "🍽️","Regreso de almuerzo",         "Regreso del tiempo de comida",      Color.FromArgb(161, 123, 6)),
+
+        // ── Café de tarde (Art. 138 CT) ───────────────────────────────
+        (6,  "☕", "Salida café — tarde",         "Descanso de tarde (~15-20 min)",    Color.FromArgb(180, 120, 60)),
+        (7,  "☕", "Regreso café — tarde",        "Regreso del descanso de tarde",     Color.FromArgb(120, 85,  45)),
+
+        // ── Comisión (Art. 33 Ley 10159) ─────────────────────────────
+        (9,  "📋", "Salida en comisión",          "Asunto institucional fuera oficina", Color.FromArgb(99,  102, 241)),
+        (10, "📋", "Regreso de comisión",         "Regreso de diligencia institucional",Color.FromArgb(67,  70,  180)),
+
+        // ── Médico CCSS (Art. 79 CT) ──────────────────────────────────
+        (11, "🏥", "Salida médica — CCSS",        "Cita médica autorizada (CCSS)",     Color.FromArgb(20,  184, 166)),
+        (12, "🏥", "Regreso cita médica",         "Regreso de cita médica",            Color.FromArgb(15,  130, 115)),
     ];
+
 
     public FormMarcas(MarcaManualService marcaService)
     {
@@ -84,10 +118,10 @@ public class FormMarcas : Form
         panel.Controls.Add(separator);
 
         // ── Botones por cada tipo de marca ────────────────────────────
-        foreach (var (id, emoji, nombre, color) in TiposMarca)
+        foreach (var (id, emoji, nombre, detalle, color) in TiposMarca)
         {
-            var btn = CrearBoton(emoji, nombre, color, id);
-            panel.Controls.Add(btn);
+            var ctrl = CrearBoton(emoji, nombre, detalle, color, id);
+            panel.Controls.Add(ctrl);
         }
 
         // ── Separador ─────────────────────────────────────────────────
@@ -119,43 +153,77 @@ public class FormMarcas : Form
         Deactivate += (s, e) => Close();
     }
 
-    private Button CrearBoton(string emoji, string nombre, Color color, byte tipoMarcaId)
+    private Control CrearBoton(string emoji, string nombre, string detalle, Color color, byte tipoMarcaId)
     {
-        var btn = new Button
+        // Panel contenedor para nombre + subtítulo
+        var container = new Panel
         {
-            Text      = $"{emoji}  {nombre}",
             Width     = 248,
-            Height    = 40,
-            FlatStyle = FlatStyle.Flat,
-            BackColor = Color.FromArgb(30, 41, 59),  // slate-800
-            ForeColor = Color.White,
-            Font      = new Font("Segoe UI", 9.5f),
-            TextAlign = ContentAlignment.MiddleLeft,
-            Padding   = new Padding(8, 0, 0, 0),
+            Height    = 48,
+            BackColor = Color.FromArgb(30, 41, 59),
             Margin    = new Padding(0, 0, 0, 4),
             Cursor    = Cursors.Hand,
             Tag       = tipoMarcaId,
         };
-        btn.FlatAppearance.BorderColor = Color.FromArgb(51, 65, 85);
-        btn.FlatAppearance.BorderSize  = 1;
 
-        // Hover: resaltar con el color del tipo de marca
-        btn.MouseEnter += (s, e) =>
+        // Barra de color lateral izquierda
+        var barra = new Panel
         {
-            btn.BackColor = Color.FromArgb(
-                Math.Min((int)color.R, 60),
-                Math.Min((int)color.G, 80),
-                Math.Min((int)color.B, 100));
-            btn.FlatAppearance.BorderColor = color;
-        };
-        btn.MouseLeave += (s, e) =>
-        {
-            btn.BackColor = Color.FromArgb(30, 41, 59);
-            btn.FlatAppearance.BorderColor = Color.FromArgb(51, 65, 85);
+            Width     = 4,
+            Height    = 48,
+            Location  = new Point(0, 0),
+            BackColor = color,
         };
 
-        btn.Click += async (s, e) => await RegistrarMarca(tipoMarcaId, nombre);
-        return btn;
+        var lblNombre = new Label
+        {
+            Text      = $"{emoji}  {nombre}",
+            ForeColor = Color.White,
+            Font      = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+            Location  = new Point(12, 6),
+            AutoSize  = false,
+            Width     = 232,
+            Height    = 18,
+        };
+
+        var lblDetalle = new Label
+        {
+            Text      = detalle,
+            ForeColor = Color.FromArgb(148, 163, 184),
+            Font      = new Font("Segoe UI", 7.5f, FontStyle.Regular),
+            Location  = new Point(12, 26),
+            AutoSize  = false,
+            Width     = 232,
+            Height    = 16,
+        };
+
+        container.Controls.AddRange([barra, lblNombre, lblDetalle]);
+
+        // Hover en el contenedor y en sus labels
+        void OnEnter(object? s, EventArgs e)
+        {
+            container.BackColor = Color.FromArgb(44, 55, 75);
+            barra.BackColor     = color;
+        }
+        void OnLeave(object? s, EventArgs e)
+        {
+            container.BackColor = Color.FromArgb(30, 41, 59);
+        }
+        void OnClick(object? s, EventArgs e) =>
+            _ = RegistrarMarca(tipoMarcaId, nombre);
+
+        container.MouseEnter  += OnEnter;
+        container.MouseLeave  += OnLeave;
+        container.Click       += OnClick;
+        lblNombre.MouseEnter  += OnEnter;
+        lblNombre.MouseLeave  += OnLeave;
+        lblNombre.Click       += OnClick;
+        lblDetalle.MouseEnter += OnEnter;
+        lblDetalle.MouseLeave += OnLeave;
+        lblDetalle.Click      += OnClick;
+        barra.Click           += OnClick;
+
+        return container;   // FlowLayoutPanel acepta Control
     }
 
     private async Task RegistrarMarca(byte tipoMarcaId, string nombreTipo)
