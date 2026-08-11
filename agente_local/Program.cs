@@ -20,12 +20,16 @@ static class Program
         // Configurar base de datos local (SQLite)
         builder.Services.AddSingleton<LocalDb>();
 
+        // Servicio para marcas manuales desde la bandeja
+        builder.Services.AddSingleton<MarcaManualService>();
+
         // Configurar HttpClient para SyncService
         builder.Services.AddHttpClient<SyncService>();
 
         // Registrar los Background Services (Workers)
         builder.Services.AddHostedService<ActivityMonitor>();
         builder.Services.AddHostedService<SyncService>();
+
 
         var host = builder.Build();
 
