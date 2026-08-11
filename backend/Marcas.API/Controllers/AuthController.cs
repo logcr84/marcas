@@ -55,6 +55,63 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Login exclusivo del Agente Local. Usa el usuario de Windows de la PC
+    /// más una clave compartida del servidor (AgentSecret). No requiere
+    /// contraseña individual del empleado.
+    /// </summary>
+    [HttpPost("login-agente")]
+    [ProducesResponseType(typeof(LoginResponse), 200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> LoginAgente([FromBody] AgentLoginRequest request)
+    {
+        try
+        {
+            // 1. Validar la clave compartida del agente
+            var agentSecretEsperado = _config["AgentConfig:AgentSecret"];
+            if (string.IsNullOrEmpty(agentSecretEsperado) ||
+                request.AgentSecret != agentSecretEsperado)
+                return Unauthorized(new { mensaje = "Clave de agente inválida." });
+
+            // 2. Buscar el empleado asociado a ese usuario de Windows
+            var usuario = await _usuarios.ObtenerPorLoginWindowsAsync(request.LoginWindows);
+            if (usuario is null)
+                return Unauthorized(new { 
+                    mensaje = $"El usuario de Windows '{request.LoginWindows}' no está registrado en el sistema." 
+                });
+
+            if (usuario.EmpleadoID is null)
+                return Unauthorized(new { 
+                    mensaje = "El usuario no tiene un empleado asociado." 
+                });
+
+            await _usuarios.ActualizarUltimoAccesoAsync(usuario.UsuarioID);
+
+            // 3. Generar JWT de corta duración (solo para el agente, 12 horas)
+            var token = GenerarToken(
+                usuario.UsuarioID,
+                usuario.Login,
+                usuario.EmpleadoID,
+                ["AGENTE"]);
+
+            var expiracion = DateTime.UtcNow.AddHours(12);
+
+            return Ok(new LoginResponse(
+                token, expiracion,
+                usuario.LoginWindows ?? usuario.Login,
+                ["AGENTE"],
+                usuario.EmpleadoID));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { 
+                mensaje = "Error interno del servidor", 
+                error = ex.Message,
+                stackTrace = ex.StackTrace
+            });
+        }
+    }
+
     private string GenerarToken(long usuarioId, string login, long? empleadoId, List<string> roles)
     {
         var jwtSection = _config.GetSection("JwtSettings");

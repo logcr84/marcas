@@ -1,0 +1,64 @@
+============================================================
+  AGENTE LOCAL - SISTEMA DE CONTROL DE MARCAS
+  RECOPE - Refinadora Costarricense de Petróleo
+============================================================
+
+CONTENIDO DE ESTA CARPETA
+--------------------------
+  Marcas.Agent.Worker.exe  -> El agente (no requiere instalar .NET)
+  appsettings.json         -> Archivo de configuración (EDITAR antes de instalar)
+  Instalar_Agente.bat      -> Instalador automático
+  Desinstalar_Agente.bat   -> Desinstalador
+  LEAME.txt                -> Este archivo
+
+PASO 1 - CONFIGURAR (OBLIGATORIO ANTES DE INSTALAR)
+----------------------------------------------------
+Abra el archivo "appsettings.json" con el Bloc de notas y
+modifique los siguientes campos:
+
+  "EmpleadoID": 1          <- Cambie al ID del empleado en el sistema
+  "AuthToken":  "PEGA..."  <- Pegue aquí el token JWT del empleado
+                              (obténgalo del portal web al iniciar sesión)
+
+PASO 2 - INSTALAR
+-----------------
+1. Haga clic derecho sobre "Instalar_Agente.bat"
+2. Seleccione "Ejecutar como administrador"
+3. Siga las instrucciones en pantalla
+4. Al finalizar, presione "S" para iniciar el agente
+
+VERIFICACIÓN
+------------
+Si el agente está corriendo, verá un ícono (ℹ) en la
+esquina inferior derecha de la pantalla, junto al reloj.
+
+Haga clic izquierdo en ese ícono para ver el panel de marcas.
+Haga clic derecho para el menú rápido.
+
+TIPOS DE MARCA DISPONIBLES (Ley 10159 / Código de Trabajo CR)
+-------------------------------------------------------------
+  🟢 Entrada al trabajo
+  ☕ Salida café — mañana    (Art. 138 CT, ~15-20 min)
+  ☕ Regreso café — mañana
+  🍽️ Salida a almuerzo       (Art. 136 CT, máx. 1 hora)
+  🍽️ Regreso de almuerzo
+  ☕ Salida café — tarde     (Art. 138 CT, ~15-20 min)
+  ☕ Regreso café — tarde
+  🔴 Salida del trabajo
+  📋 Salida en comisión      (Art. 33 Ley 10159)
+  📋 Regreso de comisión
+  🏥 Salida médica — CCSS    (Art. 79 CT)
+  🏥 Regreso cita médica
+
+REQUISITOS MÍNIMOS
+------------------
+  - Windows 10 o Windows 11 (64 bits)
+  - Conexión a internet (para sincronizar con el servidor)
+  - No requiere instalar .NET Framework ni ningún otro programa
+
+SOPORTE
+-------
+  Sistema desarrollado como proyecto de tesis.
+  Para soporte técnico, contacte al administrador del sistema.
+
+============================================================

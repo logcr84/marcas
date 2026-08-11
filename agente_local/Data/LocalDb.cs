@@ -108,4 +108,17 @@ public class LocalDb
         await connection.ExecuteAsync(sql, new { IdempotencyKey = idempotencyKey.ToString() });
         _logger.LogInformation("Marca {IdempotencyKey} marcada como sincronizada.", idempotencyKey);
     }
+
+    /// <summary>
+    /// Actualiza el EmpleadoID en las marcas pendientes de sincronización.
+    /// Se llama tras el auto-login para asegurar que el ID venga de la BD, no de config.
+    /// </summary>
+    public async Task ActualizarEmpleadoIdAsync(long empleadoId)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        const string sql = "UPDATE Marcas SET EmpleadoID = @EmpleadoID WHERE IsSynced = 0;";
+        var afectadas = await connection.ExecuteAsync(sql, new { EmpleadoID = empleadoId });
+        if (afectadas > 0)
+            _logger.LogInformation("EmpleadoID actualizado a {Id} en {N} marcas pendientes.", empleadoId, afectadas);
+    }
 }
