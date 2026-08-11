@@ -10,23 +10,30 @@ using Marcas.Agent.Worker.Data;
 
 namespace Marcas.Agent.Worker.Services;
 
+/// <summary>
+/// Monitorea la inactividad del teclado/mouse y genera marcas automáticas.
+/// Lee EmpleadoID de AgentSession (no de appsettings).
+/// </summary>
 public class ActivityMonitor : BackgroundService
 {
     private readonly ILogger<ActivityMonitor> _logger;
     private readonly LocalDb _localDb;
-    private readonly IConfiguration _configuration;
+    private readonly AgentSession _session;
     private readonly int _idleThresholdSeconds;
-    private readonly long _empleadoId;
 
     private bool _isCurrentlyIdle = false;
 
-    public ActivityMonitor(ILogger<ActivityMonitor> logger, LocalDb localDb, IConfiguration configuration)
+    public ActivityMonitor(
+        ILogger<ActivityMonitor> logger,
+        LocalDb localDb,
+        AgentSession session,
+        IConfiguration configuration)
     {
-        _logger = logger;
-        _localDb = localDb;
-        _configuration = configuration;
-        _idleThresholdSeconds = _configuration.GetValue<int>("AgentConfig:IdleThresholdSeconds", 300); // Default 5 mins
-        _empleadoId = _configuration.GetValue<long>("AgentConfig:EmpleadoID", 1);
+        _logger               = logger;
+        _localDb              = localDb;
+        _session              = session;
+        _idleThresholdSeconds = configuration.GetValue<int>(
+            "AgentConfig:IdleThresholdSeconds", 900); // Default 15 min (Art. 138 CT)
     }
 
     [DllImport("user32.dll")]
@@ -39,63 +46,85 @@ public class ActivityMonitor : BackgroundService
         public uint dwTime;
     }
 
-    private uint GetIdleTime()
+    private uint GetIdleSeconds()
     {
-        var lastInputInfo = new LASTINPUTINFO();
-        lastInputInfo.cbSize = (uint)Marshal.SizeOf(lastInputInfo);
-        
-        if (GetLastInputInfo(ref lastInputInfo))
-        {
-            var systemUptime = (uint)Environment.TickCount;
-            var idleTicks = systemUptime - lastInputInfo.dwTime;
-            return idleTicks / 1000; // Returns idle time in seconds
-        }
-        return 0;
+        var lastInput = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
+        return GetLastInputInfo(ref lastInput)
+            ? ((uint)Environment.TickCount - lastInput.dwTime) / 1000u
+            : 0u;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("ActivityMonitor iniciado. Umbral de inactividad: {Seconds}s", _idleThresholdSeconds);
+        _logger.LogInformation(
+            "ActivityMonitor iniciado. Umbral de inactividad: {Seg}s ({Min} min).",
+            _idleThresholdSeconds, _idleThresholdSeconds / 60);
 
-        // Generamos una marca de "Entrada" al iniciar el servicio (o reanudar la PC)
-        await RecordMarcaAsync(1); // 1 = Entrada
+        // Esperar a que el agente esté autenticado antes de empezar a registrar
+        await EsperarSesionAsync(stoppingToken);
+
+        // Marca de Entrada automática al arrancar
+        await RecordMarcaAsync(1, "Inicio de sesión de Windows detectado");
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var idleTime = GetIdleTime();
-
-            if (idleTime >= _idleThresholdSeconds && !_isCurrentlyIdle)
+            // Si el token expiró, esperar a que se renueve
+            if (!_session.Autenticado)
             {
-                // El usuario pasó a estado inactivo (Salida)
+                await EsperarSesionAsync(stoppingToken);
+                continue;
+            }
+
+            var idleSecs = GetIdleSeconds();
+
+            if (idleSecs >= _idleThresholdSeconds && !_isCurrentlyIdle)
+            {
                 _isCurrentlyIdle = true;
-                _logger.LogInformation("Usuario inactivo detectado ({IdleTime}s). Generando marca de Salida.", idleTime);
-                await RecordMarcaAsync(2); // 2 = Salida
+                _logger.LogInformation(
+                    "Inactividad detectada ({Seg}s). Generando marca de Salida.", idleSecs);
+                await RecordMarcaAsync(8, $"Inactividad automática ({idleSecs}s sin actividad)");
             }
-            else if (idleTime < _idleThresholdSeconds && _isCurrentlyIdle)
+            else if (idleSecs < _idleThresholdSeconds && _isCurrentlyIdle)
             {
-                // El usuario volvió a estar activo (Entrada)
                 _isCurrentlyIdle = false;
-                _logger.LogInformation("Usuario volvió a estar activo. Generando marca de Entrada.");
-                await RecordMarcaAsync(1); // 1 = Entrada
+                _logger.LogInformation("Actividad detectada. Generando marca de Entrada.");
+                await RecordMarcaAsync(1, "Retorno de inactividad detectado");
             }
 
-            await Task.Delay(5000, stoppingToken); // Check every 5 seconds
+            await Task.Delay(5_000, stoppingToken);
         }
     }
 
-    private async Task RecordMarcaAsync(byte tipoMarca)
+    private async Task RecordMarcaAsync(byte tipoMarca, string observacion)
     {
+        // Si aún no hay sesión, no registrar (evitar EmpleadoID=0)
+        if (!_session.Autenticado || _session.EmpleadoId == 0)
+        {
+            _logger.LogWarning("Sin sesión activa. Marca tipo {T} descartada.", tipoMarca);
+            return;
+        }
+
         var marca = new MarcaLocal
         {
-            EmpleadoID = _empleadoId,
-            TipoMarcaID = tipoMarca,
-            AgenteID = null, // Podría ser el ID de este agente/PC
-            IdempotencyKey = Guid.NewGuid(),
-            FechaHoraCliente = DateTime.Now,
-            ObservacionTecnica = tipoMarca == 1 ? "Retorno a la actividad" : "Inactividad detectada",
-            IsSynced = 0
+            EmpleadoID         = _session.EmpleadoId,
+            TipoMarcaID        = tipoMarca,
+            AgenteID           = _session.AgenteId,
+            IdempotencyKey     = Guid.NewGuid(),
+            FechaHoraCliente   = DateTime.Now,
+            ObservacionTecnica = observacion,
+            IsSynced           = 0,
         };
 
         await _localDb.SaveMarcaAsync(marca);
+    }
+
+    /// <summary>
+    /// Espera de forma no bloqueante hasta que AgentSession tenga una sesión válida.
+    /// </summary>
+    private async Task EsperarSesionAsync(CancellationToken ct)
+    {
+        _logger.LogInformation("Esperando autenticación del agente...");
+        while (!_session.Autenticado && !ct.IsCancellationRequested)
+            await Task.Delay(3_000, ct);
     }
 }

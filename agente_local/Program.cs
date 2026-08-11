@@ -17,23 +17,27 @@ static class Program
 
         var builder = Host.CreateApplicationBuilder(args);
 
-        // Configurar base de datos local (SQLite)
+        // ── Sesión compartida: se llena tras el auto-login ────────────
+        builder.Services.AddSingleton<AgentSession>();
+
+        // ── Base de datos local SQLite ─────────────────────────────────
         builder.Services.AddSingleton<LocalDb>();
 
-        // Servicio para marcas manuales desde la bandeja
+        // ── Servicio de marcas manuales (bandeja) ──────────────────────
         builder.Services.AddSingleton<MarcaManualService>();
 
-        // Configurar HttpClient para SyncService
+        // ── HttpClient para SyncService ────────────────────────────────
         builder.Services.AddHttpClient<SyncService>();
 
-        // Registrar los Background Services (Workers)
-        builder.Services.AddHostedService<ActivityMonitor>();
+        // ── Workers (Background Services) ─────────────────────────────
+        // SyncService arranca primero: autentica y llena AgentSession
+        // ActivityMonitor espera a que AgentSession esté lista
         builder.Services.AddHostedService<SyncService>();
-
+        builder.Services.AddHostedService<ActivityMonitor>();
 
         var host = builder.Build();
 
-        // Iniciar la aplicación de Windows Forms con el icono en la bandeja
+        // ── Iniciar la bandeja del sistema ─────────────────────────────
         Application.Run(new TrayApplicationContext(host));
     }
 }
