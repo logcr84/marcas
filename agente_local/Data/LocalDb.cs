@@ -2,8 +2,10 @@ using Dapper;
 using Marcas.Agent.Worker.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Marcas.Agent.Worker.Data;
@@ -67,11 +69,36 @@ public class LocalDb
         _logger.LogInformation("Marca {IdempotencyKey} guardada localmente.", marca.IdempotencyKey);
     }
 
+    // Clase interna para leer filas crudas de SQLite (IdempotencyKey como string)
+    private class RawMarcaRow
+    {
+        public string IdempotencyKey { get; set; } = string.Empty;
+        public long EmpleadoID { get; set; }
+        public byte TipoMarcaID { get; set; }
+        public long? AgenteID { get; set; }
+        public string FechaHoraCliente { get; set; } = string.Empty;
+        public string? ObservacionTecnica { get; set; }
+        public int IsSynced { get; set; }
+    }
+
     public async Task<IEnumerable<MarcaLocal>> GetUnsyncedMarcasAsync()
     {
         using var connection = new SqliteConnection(_connectionString);
         const string sql = "SELECT * FROM Marcas WHERE IsSynced = 0;";
-        return await connection.QueryAsync<MarcaLocal>(sql);
+
+        // Leer como filas crudas para evitar el error de conversión String -> Guid
+        var rows = await connection.QueryAsync<RawMarcaRow>(sql);
+
+        return rows.Select(r => new MarcaLocal
+        {
+            IdempotencyKey   = Guid.Parse(r.IdempotencyKey),
+            EmpleadoID       = r.EmpleadoID,
+            TipoMarcaID      = r.TipoMarcaID,
+            AgenteID         = r.AgenteID,
+            FechaHoraCliente = DateTime.Parse(r.FechaHoraCliente),
+            ObservacionTecnica = r.ObservacionTecnica,
+            IsSynced         = r.IsSynced
+        });
     }
 
     public async Task MarkAsSyncedAsync(System.Guid idempotencyKey)
