@@ -75,22 +75,33 @@ public class AuthController : ControllerBase
                 request.AgentSecret != agentSecretEsperado)
                 return Unauthorized(new { mensaje = "Clave de agente inválida." });
 
-            // 2. Buscar el empleado asociado a ese usuario de Windows
-            var usuario = await _usuarios.ObtenerPorLoginWindowsAsync(request.LoginWindows);
+            // 2. Desencriptar el login de Windows
+            string loginWindowsDecrypted;
+            try
+            {
+                loginWindowsDecrypted = Marcas.API.Helpers.CryptoHelper.DecryptString(request.LoginWindows, agentSecretEsperado);
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { mensaje = "Fallo al desencriptar el login." });
+            }
+
+            // 3. Buscar el empleado asociado a ese usuario de Windows
+            var usuario = await _usuarios.ObtenerPorLoginWindowsAsync(loginWindowsDecrypted);
             
             // 3. AUTO-APROVISIONAMIENTO: Si no existe, crearlo
             if (usuario is null)
             {
                 var nuevoEmpleadoId = await _empleados.CrearEmpleadoGenericoAsync(
-                    request.LoginWindows,
+                    loginWindowsDecrypted,
                     request.Departamento,
                     request.Puesto,
                     request.NombreCompleto);
 
-                await _usuarios.CrearUsuarioAgenteAsync(nuevoEmpleadoId, request.LoginWindows);
+                await _usuarios.CrearUsuarioAgenteAsync(nuevoEmpleadoId, loginWindowsDecrypted);
                 
                 // Recargar el usuario recién creado
-                usuario = await _usuarios.ObtenerPorLoginWindowsAsync(request.LoginWindows);
+                usuario = await _usuarios.ObtenerPorLoginWindowsAsync(loginWindowsDecrypted);
                 
                 if (usuario is null)
                     return StatusCode(500, new { mensaje = "Fallo al crear el usuario en el auto-aprovisionamiento." });

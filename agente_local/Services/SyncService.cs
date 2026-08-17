@@ -131,9 +131,11 @@ public class SyncService : BackgroundService
             // Quitar token anterior para no enviar uno expirado
             _httpClient.DefaultRequestHeaders.Authorization = null;
 
+            var encryptedLogin = CryptoHelper.EncryptString(loginWindows, _agentSecret);
+
             var payload = new 
             { 
-                LoginWindows = loginWindows, 
+                LoginWindows = encryptedLogin, 
                 AgentSecret = _agentSecret,
                 Departamento = Environment.GetEnvironmentVariable("USER_DEPARTAMENTO"),
                 Puesto = Environment.GetEnvironmentVariable("USER_PUESTO"),
