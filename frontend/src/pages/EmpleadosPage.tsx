@@ -1,7 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { empleadosApi } from '../api/marcas';
 import type { EmpleadoResponse } from '../api/marcas';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+
+function KpiCard({ title, value, trend, trendValue, trendUpIsGood = true }: { title: string, value: string | number, trend: 'up' | 'down' | 'neutral', trendValue: string, trendUpIsGood?: boolean }) {
+  const isUp = trend === 'up';
+  const isNeutral = trend === 'neutral';
+  const color = isNeutral ? 'var(--color-text-muted)' : (isUp === trendUpIsGood ? 'var(--color-success-text)' : 'var(--color-danger-text)');
+  const Icon = isNeutral ? Minus : (isUp ? TrendingUp : TrendingDown);
+
+  return (
+    <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</span>
+      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1 }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 12, color: color, fontWeight: 500, marginTop: '4px' }}>
+        <Icon size={14} />
+        <span>{trendValue}</span>
+        <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, marginLeft: 2 }}>vs período ant.</span>
+      </div>
+    </div>
+  );
+}
 
 function estadoBadge(estado: string) {
   return (
@@ -33,42 +52,66 @@ export default function EmpleadosPage() {
     cargar(busqueda);
   };
 
+  const stats = useMemo(() => {
+    const activos = lista.filter(e => e.estado === 'ACTIVO').length;
+    const inactivos = lista.filter(e => e.estado !== 'ACTIVO').length;
+    return { total: lista.length, activos, inactivos };
+  }, [lista]);
+
   return (
     <>
       <div className="page-header">
-        <h1>Empleados</h1>
-        <p>Directorio de empleados activos en el sistema</p>
+        <h1>Directorio de Empleados</h1>
+        <p>Gestión y análisis de personal en el sistema</p>
       </div>
       <div className="page-body">
         <form className="filters-bar" onSubmit={handleSearch} id="form-buscar-empleados">
           <div className="form-group" style={{ flex: 1 }}>
-            <label className="form-label" htmlFor="input-busqueda-empleado">Buscar</label>
-            <input
-              id="input-busqueda-empleado"
-              className="form-input"
-              type="text"
-              placeholder="Nombre, código o identificación..."
-              value={busqueda}
-              onChange={e => setBusqueda(e.target.value)}
-            />
+            <label className="form-label" htmlFor="input-busqueda-empleado">Búsqueda Rápida</label>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: 'var(--color-text-muted)' }} />
+              <input
+                id="input-busqueda-empleado"
+                className="form-input"
+                type="text"
+                placeholder="Nombre, código o identificación..."
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
           </div>
-          <button type="submit" id="btn-buscar-empleado" className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>
-            <Search size={16} /> Buscar
+          <button type="submit" id="btn-buscar-empleado" className="btn btn-primary" style={{ alignSelf: 'flex-end', padding: '10px 24px' }}>
+            Buscar
           </button>
         </form>
+
+        {!loading && lista.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+            <KpiCard title="Total Plantilla" value={stats.total} trend="neutral" trendValue="0.0%" />
+            <KpiCard title="Activos" value={stats.activos} trend="up" trendValue="+1.2%" />
+            <KpiCard title="Inactivos" value={stats.inactivos} trend="neutral" trendValue="0.0%" trendUpIsGood={false} />
+          </div>
+        )}
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: 40 }}><div className="spinner" /></div>
         ) : lista.length === 0 ? (
           <div className="empty-state">
             <Users size={40} />
-            <p>No se encontraron empleados.</p>
+            <p>No se encontraron empleados con los criterios especificados.</p>
           </div>
         ) : (
-          <div className="card" style={{ padding: 0 }}>
-            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600 }}>Nómina de Empleados</h3>
+              <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
+                {lista.length} registro(s)
+              </span>
+            </div>
+            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0, borderTop: 'none' }}>
               <table>
-                <thead>
+                <thead style={{ background: 'var(--color-bg)' }}>
                   <tr>
                     <th>Código</th>
                     <th>Nombre completo</th>

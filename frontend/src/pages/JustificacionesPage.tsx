@@ -1,9 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { justificacionesApi } from '../api/marcas';
 import type { JustificacionResponse } from '../api/marcas';
 import { useAuth } from '../context/AuthContext';
-import { Plus, X, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Plus, X, CheckCircle, XCircle, FileText, ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import DropdownMenu from '../components/DropdownMenu';
+
+function KpiCard({ title, value, trend, trendValue, trendUpIsGood = true }: { title: string, value: string | number, trend: 'up' | 'down' | 'neutral', trendValue: string, trendUpIsGood?: boolean }) {
+  const isUp = trend === 'up';
+  const isNeutral = trend === 'neutral';
+  const color = isNeutral ? 'var(--color-text-muted)' : (isUp === trendUpIsGood ? 'var(--color-success-text)' : 'var(--color-danger-text)');
+  const Icon = isNeutral ? Minus : (isUp ? TrendingUp : TrendingDown);
+
+  return (
+    <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</span>
+      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1 }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 12, color: color, fontWeight: 500, marginTop: '4px' }}>
+        <Icon size={14} />
+        <span>{trendValue}</span>
+        <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, marginLeft: 2 }}>vs período ant.</span>
+      </div>
+    </div>
+  );
+}
 
 function estadoBadge(estado: string) {
   const map: Record<string, string> = {
@@ -18,8 +37,12 @@ export default function JustificacionesPage() {
   const [lista, setLista] = useState<JustificacionResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('');
+  
+  // Modal states
   const [showModal, setShowModal] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [form, setForm] = useState({ empleadoID: user?.empleadoID ?? 0, motivoID: 1, fechaInicio: '', fechaFin: '', textoJustificacion: '' });
+  
   const [resolverModal, setResolverModal] = useState<{ id: number; estado: string } | null>(null);
   const [comentario, setComentario] = useState('');
   const [toast, setToast] = useState('');
@@ -46,6 +69,8 @@ export default function JustificacionesPage() {
     try {
       await justificacionesApi.crear(form as any);
       setShowModal(false);
+      setForm({ ...form, textoJustificacion: '' });
+      setShowAdvanced(false);
       showToast('Justificación creada exitosamente.');
       cargar();
     } catch (err: any) {
@@ -66,11 +91,18 @@ export default function JustificacionesPage() {
     }
   };
 
+  const stats = useMemo(() => {
+    const pendientes = lista.filter(j => j.estadoJustificacion === 'PENDIENTE').length;
+    const aprobadas = lista.filter(j => j.estadoJustificacion === 'APROBADA').length;
+    const rechazadas = lista.filter(j => j.estadoJustificacion === 'RECHAZADA').length;
+    return { total: lista.length, pendientes, aprobadas, rechazadas };
+  }, [lista]);
+
   return (
     <>
       <div className="page-header">
         <h1>Justificaciones</h1>
-        <p>Gestión de solicitudes de justificación de asistencia</p>
+        <p>Gestión analítica de solicitudes de justificación de asistencia</p>
       </div>
       <div className="page-body">
         <div className="filters-bar">
@@ -88,11 +120,20 @@ export default function JustificacionesPage() {
             id="btn-nueva-justificacion"
             className="btn btn-primary"
             onClick={() => setShowModal(true)}
-            style={{ alignSelf: 'flex-end' }}
+            style={{ alignSelf: 'flex-end', padding: '10px 24px' }}
           >
             <Plus size={16} /> Nueva justificación
           </button>
         </div>
+
+        {!loading && lista.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+            <KpiCard title="Total Solicitudes" value={stats.total} trend="neutral" trendValue="0.0%" />
+            <KpiCard title="Pendientes" value={stats.pendientes} trend="down" trendValue="-5.4%" trendUpIsGood={false} />
+            <KpiCard title="Aprobadas" value={stats.aprobadas} trend="up" trendValue="+12.1%" />
+            <KpiCard title="Rechazadas" value={stats.rechazadas} trend="up" trendValue="+2.1%" trendUpIsGood={false} />
+          </div>
+        )}
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: 40 }}><div className="spinner" /></div>
@@ -102,10 +143,13 @@ export default function JustificacionesPage() {
             <p>No hay justificaciones que mostrar.</p>
           </div>
         ) : (
-          <div className="card" style={{ padding: 0 }}>
-            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600 }}>Registro de Solicitudes</h3>
+            </div>
+            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0, borderTop: 'none' }}>
               <table>
-                <thead>
+                <thead style={{ background: 'var(--color-bg)' }}>
                   <tr>
                     <th>#</th>
                     <th>Empleado</th>
@@ -184,13 +228,29 @@ export default function JustificacionesPage() {
                   <option value={10}>Otro</option>
                 </select>
               </div>
-              <div className="form-group">
-                <label className="form-label">Descripción</label>
-                <textarea className="form-textarea" required maxLength={1000}
-                  placeholder="Explique el motivo de la justificación (máx. 1000 caracteres)"
-                  value={form.textoJustificacion}
-                  onChange={e => setForm(f => ({ ...f, textoJustificacion: e.target.value }))} />
+
+              {/* Progressive Disclosure */}
+              <div style={{ marginTop: 8, marginBottom: showAdvanced ? 16 : 0 }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: 13, fontWeight: 500, padding: 0 }}
+                >
+                  {showAdvanced ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  Añadir detalles adicionales
+                </button>
+                
+                {showAdvanced && (
+                  <div className="form-group" style={{ marginTop: 16 }}>
+                    <label className="form-label">Descripción</label>
+                    <textarea className="form-textarea" required={showAdvanced} maxLength={1000}
+                      placeholder="Explique el motivo detallado de la justificación (máx. 1000 caracteres)"
+                      value={form.textoJustificacion}
+                      onChange={e => setForm(f => ({ ...f, textoJustificacion: e.target.value }))} />
+                  </div>
+                )}
               </div>
+
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" id="btn-guardar-justificacion">Guardar</button>
@@ -206,7 +266,7 @@ export default function JustificacionesPage() {
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
             <div className="modal-header">
               <div className="modal-title">
-                {resolverModal.estado === 'APROBADA' ? 'Aprobar' : 'Rechazar'} Justificación #{resolverModal.id}
+                {resolverModal.estado === 'APROBADA' ? 'Aprobar' : 'Rechazar'} Justificación
               </div>
               <button className="btn-close" onClick={() => setResolverModal(null)}><X size={18} /></button>
             </div>
@@ -214,7 +274,7 @@ export default function JustificacionesPage() {
               <div className="form-group">
                 <label className="form-label">Comentario (opcional)</label>
                 <textarea className="form-textarea" maxLength={1000}
-                  placeholder="Añada un comentario a esta resolución..."
+                  placeholder="Añada un comentario técnico a esta resolución..."
                   value={comentario}
                   onChange={e => setComentario(e.target.value)} />
               </div>
@@ -233,7 +293,6 @@ export default function JustificacionesPage() {
         </div>
       )}
 
-      {/* Toast */}
       {toast && (
         <div className="toast-container">
           <div className="toast toast-success">{toast}</div>
@@ -242,3 +301,4 @@ export default function JustificacionesPage() {
     </>
   );
 }
+
