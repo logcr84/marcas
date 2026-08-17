@@ -10,8 +10,20 @@ public class DbConnectionFactory
 
     public DbConnectionFactory(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")
+        var rawConnStr = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no está configurada.");
+
+        // Render.com inyecta la conexión en formato URI (postgres://user:pass@host:port/db)
+        if (rawConnStr.StartsWith("postgres://") || rawConnStr.StartsWith("postgresql://"))
+        {
+            var uri = new Uri(rawConnStr);
+            var userInfo = uri.UserInfo.Split(':');
+            _connectionString = $"Host={uri.Host};Port={(uri.Port > 0 ? uri.Port : 5432)};Database={uri.LocalPath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Prefer;Trust Server Certificate=true;";
+        }
+        else
+        {
+            _connectionString = rawConnStr;
+        }
     }
 
     public IDbConnection CreateConnection()
