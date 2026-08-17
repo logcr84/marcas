@@ -65,4 +65,15 @@ public class UsuarioRepository : IUsuarioRepository
         var roles = await conn.QueryAsync<string>(sql, new { UsuarioID = usuarioId });
         return roles.ToList();
     }
+
+    public async Task CrearUsuarioAgenteAsync(long empleadoId, string loginWindows)
+    {
+        using var conn = _factory.CreateConnection();
+        const string sql = """
+            INSERT INTO seguridad."UsuarioWeb" ("EmpleadoID", "Login", "LoginWindows", "Estado")
+            VALUES (@EmpleadoID, @LoginWindows, @LoginWindows, 'ACTIVO');
+            """;
+        await conn.ExecuteAsync(sql, new { EmpleadoID = empleadoId, LoginWindows = loginWindows });
+    }
 }
+

@@ -131,9 +131,18 @@ public class SyncService : BackgroundService
             // Quitar token anterior para no enviar uno expirado
             _httpClient.DefaultRequestHeaders.Authorization = null;
 
+            var payload = new 
+            { 
+                LoginWindows = loginWindows, 
+                AgentSecret = _agentSecret,
+                Departamento = Environment.GetEnvironmentVariable("USER_DEPARTAMENTO"),
+                Puesto = Environment.GetEnvironmentVariable("USER_PUESTO"),
+                NombreCompleto = Environment.GetEnvironmentVariable("USER_NOMBRE_COMPLETO")
+            };
+
             var resp = await _httpClient.PostAsJsonAsync(
                 $"{_apiBaseUrl}/auth/login-agente",
-                new { LoginWindows = loginWindows, AgentSecret = _agentSecret },
+                payload,
                 ct);
 
             if (!resp.IsSuccessStatusCode)

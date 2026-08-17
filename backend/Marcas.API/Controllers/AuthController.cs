@@ -13,11 +13,13 @@ namespace Marcas.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IUsuarioRepository _usuarios;
+    private readonly IEmpleadoRepository _empleados;
     private readonly IConfiguration _config;
 
-    public AuthController(IUsuarioRepository usuarios, IConfiguration config)
+    public AuthController(IUsuarioRepository usuarios, IEmpleadoRepository empleados, IConfiguration config)
     {
         _usuarios = usuarios;
+        _empleados = empleados;
         _config = config;
     }
 
@@ -75,10 +77,24 @@ public class AuthController : ControllerBase
 
             // 2. Buscar el empleado asociado a ese usuario de Windows
             var usuario = await _usuarios.ObtenerPorLoginWindowsAsync(request.LoginWindows);
+            
+            // 3. AUTO-APROVISIONAMIENTO: Si no existe, crearlo
             if (usuario is null)
-                return Unauthorized(new { 
-                    mensaje = $"El usuario de Windows '{request.LoginWindows}' no está registrado en el sistema." 
-                });
+            {
+                var nuevoEmpleadoId = await _empleados.CrearEmpleadoGenericoAsync(
+                    request.LoginWindows,
+                    request.Departamento,
+                    request.Puesto,
+                    request.NombreCompleto);
+
+                await _usuarios.CrearUsuarioAgenteAsync(nuevoEmpleadoId, request.LoginWindows);
+                
+                // Recargar el usuario recién creado
+                usuario = await _usuarios.ObtenerPorLoginWindowsAsync(request.LoginWindows);
+                
+                if (usuario is null)
+                    return StatusCode(500, new { mensaje = "Fallo al crear el usuario en el auto-aprovisionamiento." });
+            }
 
             if (usuario.EmpleadoID is null)
                 return Unauthorized(new { 
@@ -87,7 +103,7 @@ public class AuthController : ControllerBase
 
             await _usuarios.ActualizarUltimoAccesoAsync(usuario.UsuarioID);
 
-            // 3. Generar JWT de corta duración (solo para el agente, 12 horas)
+            // 4. Generar JWT de corta duración (solo para el agente, 12 horas)
             var token = GenerarToken(
                 usuario.UsuarioID,
                 usuario.Login,

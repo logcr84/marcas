@@ -13,7 +13,10 @@ public record LoginRequest(
 /// </summary>
 public record AgentLoginRequest(
     [Required] string LoginWindows,   // Environment.UserName de la PC
-    [Required] string AgentSecret     // Clave compartida configurada en la API
+    [Required] string AgentSecret,    // Clave compartida configurada en la API
+    string? Departamento = null,      // Variable de entorno USER_DEPARTAMENTO
+    string? Puesto = null,            // Variable de entorno USER_PUESTO
+    string? NombreCompleto = null     // Variable de entorno USER_NOMBRE_COMPLETO
 );
 
 public record LoginResponse(
