@@ -32,13 +32,20 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 
 WORKDIR /app
 
-# Crear usuario no-root por seguridad
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-USER appuser
+# Instalar psql para correr los scripts de la BD
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
 COPY --from=backend-build /publish ./
+COPY db/ ./db/
+COPY init-db.sh ./
+RUN chmod +x init-db.sh
+
+# Crear usuario no-root por seguridad y asignar permisos
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+RUN chown -R appuser:appgroup /app
+USER appuser
 
 # Render inyecta PORT; el entrypoint lo lee desde Program.cs
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "Marcas.API.dll"]
+ENTRYPOINT ["./init-db.sh"]
