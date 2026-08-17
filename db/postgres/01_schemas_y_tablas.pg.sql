@@ -326,4 +326,7 @@ CREATE INDEX IF NOT EXISTS "IX_Agente_Heartbeat"
     ON infra."AgenteInstalado" ("Estado", "UltimoHeartbeat" DESC);
 
 -- ============================================================
-RAISE NOTICE 'Script 01 ejecutado correctamente: Esquemas, Tablas e Índices creados.';
+DO $$
+BEGIN
+    RAISE NOTICE 'Script 01 ejecutado correctamente: Esquemas, Tablas, Constraints e Índices creados.';
+END $$;

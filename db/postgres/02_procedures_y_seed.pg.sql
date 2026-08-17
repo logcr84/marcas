@@ -296,4 +296,7 @@ FROM seguridad."UsuarioWeb" uw, seguridad."Rol" r
 WHERE uw."Login" = 'admin@marcas.local' AND r."Nombre" = 'RRHH_ADMIN'
 ON CONFLICT ("UsuarioID", "RolID") DO NOTHING;
 
-RAISE NOTICE 'Script 02 ejecutado correctamente: Funciones, Vistas y Datos semilla creados.';
+DO $$
+BEGIN
+    RAISE NOTICE 'Script 02 ejecutado correctamente: Funciones, Vistas y Datos semilla creados.';
+END $$;
