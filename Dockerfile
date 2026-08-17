@@ -55,7 +55,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
 # Crear usuario no-root por seguridad
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 USER appuser
 
 COPY --from=backend-build /publish ./
