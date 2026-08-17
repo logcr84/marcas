@@ -113,3 +113,31 @@ SELECT uw."UsuarioID", r."RolID"
 FROM seguridad."UsuarioWeb" uw, seguridad."Rol" r
 WHERE uw."Login" = 'hector@marcas.local' AND r."Nombre" = 'EMPLEADO_CONSULTA'
 ON CONFLICT ("UsuarioID", "RolID") DO NOTHING;
+
+-- Marcas de prueba para Héctor
+INSERT INTO asistencia."Marca" ("EmpleadoID", "TipoMarcaID", "FechaHoraServidor", "IdempotencyKey", "EstadoMarca")
+SELECT e."EmpleadoID", 1, NOW() - INTERVAL '1 days 8 hours', gen_random_uuid(), 'VALIDA'
+FROM rrhh."Empleado" e WHERE e."CodigoEmpleado" = 'EMP-005'
+AND NOT EXISTS (
+    SELECT 1 FROM asistencia."Marca" m2 
+    WHERE m2."EmpleadoID" = e."EmpleadoID" AND m2."TipoMarcaID" = 1 
+    AND m2."FechaHoraServidor"::date = (NOW() - INTERVAL '1 days 8 hours')::date
+);
+
+INSERT INTO asistencia."Marca" ("EmpleadoID", "TipoMarcaID", "FechaHoraServidor", "IdempotencyKey", "EstadoMarca")
+SELECT e."EmpleadoID", 8, NOW() - INTERVAL '1 days 0 hours', gen_random_uuid(), 'VALIDA'
+FROM rrhh."Empleado" e WHERE e."CodigoEmpleado" = 'EMP-005'
+AND NOT EXISTS (
+    SELECT 1 FROM asistencia."Marca" m2 
+    WHERE m2."EmpleadoID" = e."EmpleadoID" AND m2."TipoMarcaID" = 8
+    AND m2."FechaHoraServidor"::date = (NOW() - INTERVAL '1 days 0 hours')::date
+);
+
+INSERT INTO asistencia."Marca" ("EmpleadoID", "TipoMarcaID", "FechaHoraServidor", "IdempotencyKey", "EstadoMarca")
+SELECT e."EmpleadoID", 1, NOW() - INTERVAL '10 minutes', gen_random_uuid(), 'VALIDA'
+FROM rrhh."Empleado" e WHERE e."CodigoEmpleado" = 'EMP-005'
+AND NOT EXISTS (
+    SELECT 1 FROM asistencia."Marca" m2 
+    WHERE m2."EmpleadoID" = e."EmpleadoID" AND m2."TipoMarcaID" = 1 
+    AND m2."FechaHoraServidor"::date = (NOW() - INTERVAL '10 minutes')::date
+);
