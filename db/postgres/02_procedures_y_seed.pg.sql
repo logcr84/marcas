@@ -284,10 +284,11 @@ ON CONFLICT ("CodigoEmpleado") DO NOTHING;
 INSERT INTO seguridad."UsuarioWeb" ("EmpleadoID", "Login", "HashPassword", "Estado")
 SELECT e."EmpleadoID",
        'admin@marcas.local',
-       '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+       '$2b$12$LxRbMGjndPMln2zbfan05OVaV./NqqNgIF7sNy7508Vc9sV2msQjy', -- Admin@2026!
        'ACTIVO'
 FROM rrhh."Empleado" e WHERE e."CodigoEmpleado" = 'ADM-001'
-ON CONFLICT ("Login") DO NOTHING;
+ON CONFLICT ("Login") DO UPDATE 
+SET "HashPassword" = '$2b$12$LxRbMGjndPMln2zbfan05OVaV./NqqNgIF7sNy7508Vc9sV2msQjy';
 
 -- Asignar rol RRHH_ADMIN al usuario administrador
 INSERT INTO seguridad."UsuarioRol" ("UsuarioID", "RolID")
