@@ -209,6 +209,56 @@ input, select, textarea { font-family: inherit; outline: none; }
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  transition: margin-left 0.2s ease;
+}
+
+/* ── Sidebar Collapsed State ── */
+.layout.sidebar-collapsed .sidebar {
+  width: var(--sidebar-collapsed);
+}
+.layout.sidebar-collapsed .main-content {
+  margin-left: var(--sidebar-collapsed);
+}
+.layout.sidebar-collapsed .sidebar-logo-text,
+.layout.sidebar-collapsed .nav-section-label,
+.layout.sidebar-collapsed .nav-item span,
+.layout.sidebar-collapsed .user-details {
+  display: none;
+}
+.layout.sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding: 12px 0;
+}
+.layout.sidebar-collapsed .user-info {
+  justify-content: center;
+  padding: 8px 0;
+}
+.layout.sidebar-collapsed .sidebar-logo {
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 26px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  z-index: 110;
+  transition: all 0.2s;
+}
+.sidebar-toggle-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border-color: var(--color-accent);
 }
 
 .page-header {

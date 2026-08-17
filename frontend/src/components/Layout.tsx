@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, ClipboardCheck,
-  Clock, Users, Fingerprint, LogOut, Settings, User
+  Clock, Users, Fingerprint, LogOut, Settings, User,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,6 +20,7 @@ export default function Layout() {
   const { user, logout, hasRole } = useAuth();
   const initials = user?.login.slice(0, 2).toUpperCase() ?? 'US';
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,9 +34,17 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="layout">
+    <div className={`layout ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
       {/* ── Sidebar ── */}
       <aside className="sidebar">
+        <button 
+          className="sidebar-toggle-btn"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          title={isCollapsed ? "Expandir menú" : "Contraer menú"}
+        >
+          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
+
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">
             <Fingerprint size={20} color="white" />
@@ -58,7 +68,7 @@ export default function Layout() {
                 id={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
               >
                 {item.icon}
-                {item.label}
+                <span>{item.label}</span>
               </NavLink>
             );
           })}

@@ -89,6 +89,9 @@ app.UseStaticFiles();
 
 app.MapControllers();
 
+// ── Endpoint para despertar la API (Render Free Tier) ─────────
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok", message = "API is awake" }));
+
 // ── Redirigir cualquier ruta no encontrada al index de React ──
 app.MapFallbackToFile("index.html");
 
