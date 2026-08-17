@@ -24,6 +24,7 @@ public record ResolverJustificacionRequest(
 public class JustificacionResponse
 {
     public long JustificacionID { get; set; }
+    public long EmpleadoID { get; set; }
     public string CodigoEmpleado { get; set; } = string.Empty;
     public string NombreEmpleado { get; set; } = string.Empty;
     public string Departamento { get; set; } = string.Empty;

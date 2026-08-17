@@ -36,7 +36,7 @@ public class JustificacionRepository : IJustificacionRepository
     {
         using var conn = _factory.CreateConnection();
         const string sql = """
-            SELECT j."JustificacionID", e."CodigoEmpleado",
+            SELECT j."JustificacionID", j."EmpleadoID", e."CodigoEmpleado",
                    e."Nombre" || ' ' || e."PrimerApellido" AS "NombreEmpleado",
                    d."Nombre" AS "Departamento",
                    mj."Descripcion" AS "Motivo",
@@ -62,7 +62,7 @@ public class JustificacionRepository : IJustificacionRepository
     {
         using var conn = _factory.CreateConnection();
         const string sql = """
-            SELECT j."JustificacionID", e."CodigoEmpleado",
+            SELECT j."JustificacionID", j."EmpleadoID", e."CodigoEmpleado",
                    e."Nombre" || ' ' || e."PrimerApellido" AS "NombreEmpleado",
                    d."Nombre" AS "Departamento",
                    mj."Descripcion" AS "Motivo",

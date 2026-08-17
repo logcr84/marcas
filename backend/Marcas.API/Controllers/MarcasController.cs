@@ -2,6 +2,7 @@ using Marcas.Core.DTOs;
 using Marcas.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Marcas.API.Controllers;
 
@@ -35,11 +36,20 @@ public class MarcasController : ControllerBase
     [HttpGet("empleado/{empleadoId:long}")]
     [Authorize(Roles = "RRHH_ADMIN,JEFATURA,AUDITOR,EMPLEADO_CONSULTA")]
     [ProducesResponseType(typeof(List<MarcaResponse>), 200)]
+    [ProducesResponseType(403)]
     public async Task<IActionResult> ObtenerPorEmpleado(
         long empleadoId,
         [FromQuery] DateOnly fechaInicio,
         [FromQuery] DateOnly fechaFin)
     {
+        bool isAdmin = User.IsInRole("RRHH_ADMIN") || User.IsInRole("JEFATURA") || User.IsInRole("AUDITOR");
+        if (!isAdmin)
+        {
+            var empleadoIdClaim = User.FindFirstValue("empleadoId");
+            long miEmpleadoId = long.TryParse(empleadoIdClaim, out var eid) ? eid : 0;
+            if (empleadoId != miEmpleadoId) return Forbid();
+        }
+
         if ((fechaFin.DayNumber - fechaInicio.DayNumber) > 183)
             return BadRequest(new { mensaje = "El rango de fechas no puede superar 183 días (6 meses)." });
 

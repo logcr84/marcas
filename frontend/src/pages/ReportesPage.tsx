@@ -75,7 +75,8 @@ export default function ReportesPage() {
     const tip: Record<string, number> = {};
     resultado.marcas.forEach(m => {
       est[m.estadoMarca] = (est[m.estadoMarca] || 0) + 1;
-      tip[m.tipoMarca] = (tip[m.tipoMarca] || 0) + 1;
+      const tipoLabel = m.nombreTipoMarca || m.tipoMarca;
+      tip[tipoLabel] = (tip[tipoLabel] || 0) + 1;
     });
     return {
       estados: Object.entries(est).map(([name, value]) => ({ name, value })),
@@ -226,7 +227,7 @@ export default function ReportesPage() {
                           <td style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
                             {format(new Date(m.fechaHoraServidor), 'dd/MM/yyyy HH:mm')}
                           </td>
-                          <td><span className="badge badge-blue" style={{ fontWeight: 400 }}>{m.tipoMarca}</span></td>
+                          <td><span className="badge badge-blue" style={{ fontWeight: 400 }}>{m.nombreTipoMarca}</span></td>
                           <td>{estadoBadge(m.estadoMarca)}</td>
                           <td>{justBadge(m.estadoJustificacion)}</td>
                         </tr>

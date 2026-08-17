@@ -87,6 +87,7 @@ RETURNS TABLE (
     "Puesto"               VARCHAR,
     "FechaHoraServidor"    TIMESTAMPTZ,
     "TipoMarca"            VARCHAR,
+    "NombreTipoMarca"      VARCHAR,
     "EstadoMarca"          VARCHAR,
     "EstadoJustificacion"  VARCHAR
 )
@@ -107,6 +108,7 @@ BEGIN
         p."Nombre"    AS "Puesto",
         m."FechaHoraServidor",
         tm."Codigo"   AS "TipoMarca",
+        tm."Nombre"   AS "NombreTipoMarca",
         m."EstadoMarca",
         j."EstadoJustificacion"
     FROM asistencia."Marca" m

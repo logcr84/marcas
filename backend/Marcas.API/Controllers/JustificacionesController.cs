@@ -23,6 +23,13 @@ public class JustificacionesController : ControllerBase
         [FromQuery] string? estado = null,
         [FromQuery] long? empleadoId = null)
     {
+        bool isAdmin = User.IsInRole("RRHH_ADMIN") || User.IsInRole("JEFATURA") || User.IsInRole("AUDITOR");
+        if (!isAdmin)
+        {
+            var empleadoIdClaim = User.FindFirstValue("empleadoId");
+            empleadoId = long.TryParse(empleadoIdClaim, out var eid) ? eid : 0;
+        }
+
         var lista = await _justificaciones.ListarAsync(estado, empleadoId);
         return Ok(lista);
     }
@@ -31,10 +38,20 @@ public class JustificacionesController : ControllerBase
     [HttpGet("{id:long}")]
     [ProducesResponseType(typeof(JustificacionResponse), 200)]
     [ProducesResponseType(404)]
+    [ProducesResponseType(403)]
     public async Task<IActionResult> Obtener(long id)
     {
         var just = await _justificaciones.ObtenerPorIdAsync(id);
         if (just is null) return NotFound();
+
+        bool isAdmin = User.IsInRole("RRHH_ADMIN") || User.IsInRole("JEFATURA") || User.IsInRole("AUDITOR");
+        if (!isAdmin)
+        {
+            var empleadoIdClaim = User.FindFirstValue("empleadoId");
+            long miEmpleadoId = long.TryParse(empleadoIdClaim, out var eid) ? eid : 0;
+            if (just.EmpleadoID != miEmpleadoId) return Forbid();
+        }
+
         return Ok(just);
     }
 

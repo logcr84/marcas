@@ -2,6 +2,7 @@ using Marcas.Core.DTOs;
 using Marcas.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Marcas.API.Controllers;
 
@@ -16,6 +17,7 @@ public class EmpleadosController : ControllerBase
 
     /// <summary>Lista empleados activos. Soporta búsqueda por nombre o código.</summary>
     [HttpGet]
+    [Authorize(Roles = "RRHH_ADMIN,JEFATURA,AUDITOR")]
     [ProducesResponseType(typeof(List<EmpleadoResponse>), 200)]
     public async Task<IActionResult> Listar([FromQuery] string? busqueda = null)
     {
@@ -27,8 +29,17 @@ public class EmpleadosController : ControllerBase
     [HttpGet("{id:long}")]
     [ProducesResponseType(typeof(EmpleadoResponse), 200)]
     [ProducesResponseType(404)]
+    [ProducesResponseType(403)]
     public async Task<IActionResult> Obtener(long id)
     {
+        bool isAdmin = User.IsInRole("RRHH_ADMIN") || User.IsInRole("JEFATURA") || User.IsInRole("AUDITOR");
+        if (!isAdmin)
+        {
+            var empleadoIdClaim = User.FindFirstValue("empleadoId");
+            long miEmpleadoId = long.TryParse(empleadoIdClaim, out var eid) ? eid : 0;
+            if (id != miEmpleadoId) return Forbid();
+        }
+
         var empleado = await _empleados.ObtenerPorIdAsync(id);
         if (empleado is null) return NotFound();
         return Ok(empleado);
