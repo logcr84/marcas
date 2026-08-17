@@ -6,7 +6,7 @@
 
 services:
   # ──────────────────────────────────────────────────────────
-  # Web Service: ASP.NET Core 10 + React (imagen Docker unificada)
+  # Web Service: Backend en ASP.NET Core 10
   # ──────────────────────────────────────────────────────────
   - type: web
     name: marcas-api
@@ -31,12 +31,30 @@ services:
       - key: JwtSettings__SecretKey
         generateValue: true
 
-      # CORS: permitir el propio dominio de Render (se actualiza con la URL real)
+      # CORS: permitir el frontend (usamos comodín temporalmente hasta saber la URL)
       - key: Cors__AllowedOrigins__0
-        value: https://marcas-api.onrender.com
+        value: '*'
 
     # Health check (opcional pero recomendado — Render lo usa para saber si el servicio está listo)
     healthCheckPath: /scalar/v1
+
+  # ──────────────────────────────────────────────────────────
+  # Static Site: Frontend en React
+  # ──────────────────────────────────────────────────────────
+  - type: static_site
+    name: marcas-frontend
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: cd frontend && npm ci && npm run build
+    publishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: marcas-api
+          envVarKey: RENDER_EXTERNAL_URL
+
 
 # ──────────────────────────────────────────────────────────────
 # Base de Datos PostgreSQL (plan gratuito de Render)
