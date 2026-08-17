@@ -41,7 +41,7 @@ services:
   # ──────────────────────────────────────────────────────────
   # Static Site: Frontend en React
   # ──────────────────────────────────────────────────────────
-  - type: static_site
+  - type: static
     name: marcas-frontend
     plan: free
     region: oregon
