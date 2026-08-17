@@ -67,13 +67,12 @@ echo.
 echo  [4/4] Instalacion completada.
 echo.
 echo  ================================================
-echo   IMPORTANTE: Antes de iniciar el agente,
-echo   edite el archivo appsettings.json ubicado en:
-echo   %INSTALL_DIR%\appsettings.json
+echo   El agente se conecta automaticamente usando
+echo   su usuario de Windows. No requiere configuracion
+echo   adicional. El empleado debe estar registrado
+echo   en el sistema con su login de Windows.
 echo.
-echo   Configure los campos:
-echo     - EmpleadoID : ID del empleado en el sistema
-echo     - AuthToken  : Token JWT del empleado
+echo   API configurada: marcas-api-2381.onrender.com
 echo  ================================================
 echo.
 

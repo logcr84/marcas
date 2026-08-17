@@ -16,10 +16,11 @@ public class FormMarcas : Form
     private Label _lblEstado = null!;
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Tipos de marca alineados a la Ley Marco de Empleo Público (Ley 10159)
-    // y el Código de Trabajo de Costa Rica.
+    // MAPA CANÓNICO de tipos de marca — empleado público CR
+    // Fuente de verdad: asistencia.TipoMarca en la BD (IDs fijos por IDENTITY).
+    // ⚠️  NO reordenar sin actualizar también el seed SQL (02_procedures_y_seed).
     //
-    //  ID  Código                  Descripción legal
+    //  ID  Código                  Base legal
     //   1  ENTRADA                 Art. 136 CT: inicio jornada
     //   2  SALIDA_CAFE_MANANA      Art. 138 CT: descanso mañana (15-20 min)
     //   3  REGRESO_CAFE_MANANA
@@ -33,32 +34,33 @@ public class FormMarcas : Form
     //  11  SALIDA_MEDICA           Art. 79 CT: cita médica CCSS
     //  12  REGRESO_MEDICA
     // ──────────────────────────────────────────────────────────────────────────
-    private static readonly (byte Id, string Emoji, string Nombre, string Detalle, Color Color)[] TiposMarca =
+    private static readonly (byte Id, string Codigo, string Emoji, string Nombre, string Detalle, Color Color)[] TiposMarca =
     [
-        // ── Jornada ──────────────────────────────────────────────────
-        (1,  "🟢", "Entrada al trabajo",        "Inicio de jornada laboral",         Color.FromArgb(34,  197, 94)),
-        (8,  "🔴", "Salida del trabajo",         "Fin de jornada laboral",            Color.FromArgb(239, 68,  68)),
+        // ── Jornada principal ─────────────────────────────────────────────
+        (1,  "ENTRADA",             "🟢", "Entrada al trabajo",        "Inicio de jornada laboral",          Color.FromArgb(34,  197, 94)),
+        (8,  "SALIDA",              "🔴", "Salida del trabajo",         "Fin de jornada laboral",             Color.FromArgb(239, 68,  68)),
 
-        // ── Café de mañana (Art. 138 CT) ─────────────────────────────
-        (2,  "☕", "Salida café — mañana",       "Descanso de mañana (~15-20 min)",   Color.FromArgb(180, 120, 60)),
-        (3,  "☕", "Regreso café — mañana",      "Regreso del descanso de mañana",    Color.FromArgb(120, 85,  45)),
+        // ── Café de mañana (Art. 138 CT) ──────────────────────────────────
+        (2,  "SALIDA_CAFE_MANANA",  "☕", "Salida café — mañana",       "Descanso de mañana (~15-20 min)",   Color.FromArgb(180, 120, 60)),
+        (3,  "REGRESO_CAFE_MANANA", "☕", "Regreso café — mañana",      "Regreso del descanso de mañana",    Color.FromArgb(120, 85,  45)),
 
-        // ── Almuerzo (Art. 136 CT) ────────────────────────────────────
-        (4,  "🍽️","Salida a almuerzo",           "Tiempo de comida (máx. 1 hora)",    Color.FromArgb(234, 179, 8)),
-        (5,  "🍽️","Regreso de almuerzo",         "Regreso del tiempo de comida",      Color.FromArgb(161, 123, 6)),
+        // ── Almuerzo (Art. 136 CT) ────────────────────────────────────────
+        (4,  "SALIDA_ALMUERZO",     "🍽️","Salida a almuerzo",           "Tiempo de comida (máx. 1 hora)",   Color.FromArgb(234, 179, 8)),
+        (5,  "REGRESO_ALMUERZO",    "🍽️","Regreso de almuerzo",         "Regreso del tiempo de comida",     Color.FromArgb(161, 123, 6)),
 
-        // ── Café de tarde (Art. 138 CT) ───────────────────────────────
-        (6,  "☕", "Salida café — tarde",         "Descanso de tarde (~15-20 min)",    Color.FromArgb(180, 120, 60)),
-        (7,  "☕", "Regreso café — tarde",        "Regreso del descanso de tarde",     Color.FromArgb(120, 85,  45)),
+        // ── Café de tarde (Art. 138 CT) ───────────────────────────────────
+        (6,  "SALIDA_CAFE_TARDE",   "☕", "Salida café — tarde",         "Descanso de tarde (~15-20 min)",   Color.FromArgb(180, 120, 60)),
+        (7,  "REGRESO_CAFE_TARDE",  "☕", "Regreso café — tarde",        "Regreso del descanso de tarde",    Color.FromArgb(120, 85,  45)),
 
-        // ── Comisión (Art. 33 Ley 10159) ─────────────────────────────
-        (9,  "📋", "Salida en comisión",          "Asunto institucional fuera oficina", Color.FromArgb(99,  102, 241)),
-        (10, "📋", "Regreso de comisión",         "Regreso de diligencia institucional",Color.FromArgb(67,  70,  180)),
+        // ── Comisión (Art. 33 Ley 10159) ─────────────────────────────────
+        (9,  "SALIDA_COMISION",     "📋", "Salida en comisión",          "Asunto institucional fuera oficina",Color.FromArgb(99,  102, 241)),
+        (10, "REGRESO_COMISION",    "📋", "Regreso de comisión",         "Regreso de diligencia institucional",Color.FromArgb(67, 70,  180)),
 
-        // ── Médico CCSS (Art. 79 CT) ──────────────────────────────────
-        (11, "🏥", "Salida médica — CCSS",        "Cita médica autorizada (CCSS)",     Color.FromArgb(20,  184, 166)),
-        (12, "🏥", "Regreso cita médica",         "Regreso de cita médica",            Color.FromArgb(15,  130, 115)),
+        // ── Médico CCSS (Art. 79 CT) ──────────────────────────────────────
+        (11, "SALIDA_MEDICA",       "🏥", "Salida médica — CCSS",        "Cita médica autorizada (CCSS)",    Color.FromArgb(20,  184, 166)),
+        (12, "REGRESO_MEDICA",      "🏥", "Regreso cita médica",         "Regreso de cita médica",           Color.FromArgb(15,  130, 115)),
     ];
+
 
 
     public FormMarcas(MarcaManualService marcaService)
@@ -118,9 +120,9 @@ public class FormMarcas : Form
         panel.Controls.Add(separator);
 
         // ── Botones por cada tipo de marca ────────────────────────────
-        foreach (var (id, emoji, nombre, detalle, color) in TiposMarca)
+        foreach (var (id, codigo, emoji, nombre, detalle, color) in TiposMarca)
         {
-            var ctrl = CrearBoton(emoji, nombre, detalle, color, id);
+            var ctrl = CrearBoton(emoji, nombre, detalle, color, id, codigo);
             panel.Controls.Add(ctrl);
         }
 
@@ -153,7 +155,7 @@ public class FormMarcas : Form
         Deactivate += (s, e) => Close();
     }
 
-    private Control CrearBoton(string emoji, string nombre, string detalle, Color color, byte tipoMarcaId)
+    private Control CrearBoton(string emoji, string nombre, string detalle, Color color, byte tipoMarcaId, string codigo)
     {
         // Panel contenedor para nombre + subtítulo
         var container = new Panel
@@ -210,7 +212,7 @@ public class FormMarcas : Form
             container.BackColor = Color.FromArgb(30, 41, 59);
         }
         void OnClick(object? s, EventArgs e) =>
-            _ = RegistrarMarca(tipoMarcaId, nombre);
+            _ = RegistrarMarca(tipoMarcaId, codigo, nombre);
 
         container.MouseEnter  += OnEnter;
         container.MouseLeave  += OnLeave;
@@ -226,14 +228,15 @@ public class FormMarcas : Form
         return container;   // FlowLayoutPanel acepta Control
     }
 
-    private async Task RegistrarMarca(byte tipoMarcaId, string nombreTipo)
+    private async Task RegistrarMarca(byte tipoMarcaId, string codigo, string nombreTipo)
     {
         _lblEstado.ForeColor = Color.FromArgb(148, 163, 184);
         _lblEstado.Text      = "⏳ Registrando...";
 
         try
         {
-            await _marcaService.RegistrarMarcaManualAsync(tipoMarcaId, $"Manual: {nombreTipo}");
+            // La observación incluye el código para facilitar diagnóstico en reportes
+            await _marcaService.RegistrarMarcaManualAsync(tipoMarcaId, $"{codigo}: {nombreTipo}");
             _lblEstado.ForeColor = Color.FromArgb(34, 197, 94);   // Verde
             _lblEstado.Text      = $"✅ {nombreTipo} registrada!";
 

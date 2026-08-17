@@ -187,13 +187,47 @@ GO
 -- DATOS SEMILLA: Catálogos
 -- ============================================================
 
--- Tipos de Marca
+-- ── Tipos de Marca: 12 tipos para empleado público CR ────────────────────────
+-- Base legal: Ley Marco de Empleo Público (Ley 10159) y Código de Trabajo CR
+-- IMPORTANTE: El orden de inserción define el TipoMarcaID (IDENTITY 1,1).
+--             El agente local referencia estos IDs por valor fijo (1-12).
+--             NO cambiar el orden sin actualizar también el agente.
+--
+--  ID │ Código                │ Descripción
+--  ───┼───────────────────────┼──────────────────────────────────────
+--   1 │ ENTRADA               │ Inicio de jornada laboral
+--   2 │ SALIDA_CAFE_MANANA    │ Descanso de mañana ~15-20 min (Art. 138 CT)
+--   3 │ REGRESO_CAFE_MANANA   │ Regreso del descanso de mañana
+--   4 │ SALIDA_ALMUERZO       │ Tiempo de comida máx. 1 h (Art. 136 CT)
+--   5 │ REGRESO_ALMUERZO      │ Regreso del tiempo de comida
+--   6 │ SALIDA_CAFE_TARDE     │ Descanso de tarde ~15-20 min (Art. 138 CT)
+--   7 │ REGRESO_CAFE_TARDE    │ Regreso del descanso de tarde
+--   8 │ SALIDA                │ Fin de jornada laboral
+--   9 │ SALIDA_COMISION       │ Comisión institucional (Art. 33 Ley 10159)
+--  10 │ REGRESO_COMISION      │ Regreso de comisión
+--  11 │ SALIDA_MEDICA         │ Cita médica CCSS (Art. 79 CT)
+--  12 │ REGRESO_MEDICA        │ Regreso de cita médica
 IF NOT EXISTS (SELECT 1 FROM asistencia.TipoMarca WHERE Codigo = 'ENTRADA')
 INSERT INTO asistencia.TipoMarca (Codigo, Nombre, OrdenDia) VALUES
-    ('ENTRADA',          'Entrada al trabajo',      1),
-    ('SALIDA_DESCANSO',  'Salida a descanso',        2),
-    ('ENTRADA_DESCANSO', 'Regreso de descanso',      3),
-    ('SALIDA',           'Salida del trabajo',       4);
+    -- Jornada principal
+    ('ENTRADA',              'Entrada al trabajo',              1),
+    -- Café mañana (Art. 138 CT)
+    ('SALIDA_CAFE_MANANA',   'Salida a café (mañana)',          2),
+    ('REGRESO_CAFE_MANANA',  'Regreso de café (mañana)',        3),
+    -- Almuerzo (Art. 136 CT)
+    ('SALIDA_ALMUERZO',      'Salida a almuerzo',               4),
+    ('REGRESO_ALMUERZO',     'Regreso de almuerzo',             5),
+    -- Café tarde (Art. 138 CT)
+    ('SALIDA_CAFE_TARDE',    'Salida a café (tarde)',           6),
+    ('REGRESO_CAFE_TARDE',   'Regreso de café (tarde)',         7),
+    -- Fin de jornada
+    ('SALIDA',               'Salida del trabajo',              8),
+    -- Comisión (Art. 33 Ley 10159)
+    ('SALIDA_COMISION',      'Salida en comisión',              9),
+    ('REGRESO_COMISION',     'Regreso de comisión',            10),
+    -- Médico CCSS (Art. 79 CT)
+    ('SALIDA_MEDICA',        'Salida a cita médica (CCSS)',    11),
+    ('REGRESO_MEDICA',       'Regreso de cita médica',         12);
 GO
 
 -- Motivos de Justificación
