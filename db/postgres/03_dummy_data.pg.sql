@@ -88,3 +88,28 @@ BEGIN
 
     RAISE NOTICE 'Datos de prueba insertados con éxito.';
 END $$;
+
+-- ============================================================
+-- Usuario de prueba: Héctor (Rol Normal)
+-- ============================================================
+INSERT INTO rrhh."Empleado" ("CodigoEmpleado", "Identificacion", "Nombre", "PrimerApellido", "SegundoApellido", "DepartamentoID", "PuestoID", "FechaIngreso")
+SELECT 'EMP-005', '505550555', 'Héctor', 'Prueba', 'Normal', "DepartamentoID", "PuestoID", '2024-01-01'
+FROM rrhh."Departamento", rrhh."Puesto"
+WHERE rrhh."Departamento"."Nombre" = 'Sistemas' AND rrhh."Puesto"."Nombre" = 'Administrador TI'
+LIMIT 1
+ON CONFLICT ("CodigoEmpleado") DO NOTHING;
+
+INSERT INTO seguridad."UsuarioWeb" ("EmpleadoID", "Login", "HashPassword", "Estado")
+SELECT e."EmpleadoID",
+       'hector@marcas.local',
+       '$2b$12$LxRbMGjndPMln2zbfan05OVaV./NqqNgIF7sNy7508Vc9sV2msQjy', -- Admin@2026!
+       'ACTIVO'
+FROM rrhh."Empleado" e WHERE e."CodigoEmpleado" = 'EMP-005'
+ON CONFLICT ("Login") DO UPDATE 
+SET "HashPassword" = '$2b$12$LxRbMGjndPMln2zbfan05OVaV./NqqNgIF7sNy7508Vc9sV2msQjy';
+
+INSERT INTO seguridad."UsuarioRol" ("UsuarioID", "RolID")
+SELECT uw."UsuarioID", r."RolID"
+FROM seguridad."UsuarioWeb" uw, seguridad."Rol" r
+WHERE uw."Login" = 'hector@marcas.local' AND r."Nombre" = 'EMPLEADO_CONSULTA'
+ON CONFLICT ("UsuarioID", "RolID") DO NOTHING;
