@@ -1,7 +1,8 @@
 import axios from 'axios';
 
+const baseUrlStr = import.meta.env.VITE_API_URL || '';
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: baseUrlStr.endsWith('/api') ? baseUrlStr : `${baseUrlStr.replace(/\/$/, '')}/api`,
 });
 
 // Interceptor: adjunta el JWT a cada petición
