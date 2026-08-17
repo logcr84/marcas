@@ -41,13 +41,14 @@ services:
   # ──────────────────────────────────────────────────────────
   # Static Site: Frontend en React
   # ──────────────────────────────────────────────────────────
-  - type: static
+  - type: web
+    runtime: static
     name: marcas-frontend
     plan: free
     region: oregon
     branch: main
     buildCommand: cd frontend && npm ci && npm run build
-    publishPath: frontend/dist
+    staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
         fromService:
