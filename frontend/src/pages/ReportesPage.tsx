@@ -69,11 +69,23 @@ export default function ReportesPage() {
     }
   };
 
+  const [busqueda, setBusqueda] = useState('');
+
+  const marcasFiltradas = useMemo(() => {
+    if (!resultado || !resultado.marcas) return [];
+    if (!busqueda.trim()) return resultado.marcas;
+    const q = busqueda.toLowerCase();
+    return resultado.marcas.filter(m => 
+      m.nombreEmpleado.toLowerCase().includes(q) || 
+      m.codigoEmpleado.toLowerCase().includes(q)
+    );
+  }, [resultado, busqueda]);
+
   const chartData = useMemo(() => {
-    if (!resultado || !resultado.marcas) return { estados: [], tipos: [] };
+    if (marcasFiltradas.length === 0) return { estados: [], tipos: [] };
     const est: Record<string, number> = {};
     const tip: Record<string, number> = {};
-    resultado.marcas.forEach(m => {
+    marcasFiltradas.forEach(m => {
       est[m.estadoMarca] = (est[m.estadoMarca] || 0) + 1;
       const tipoLabel = m.nombreTipoMarca || m.tipoMarca;
       tip[tipoLabel] = (tip[tipoLabel] || 0) + 1;
@@ -82,16 +94,16 @@ export default function ReportesPage() {
       estados: Object.entries(est).map(([name, value]) => ({ name, value })),
       tipos: Object.entries(tip).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
     };
-  }, [resultado]);
+  }, [marcasFiltradas]);
 
   const stats = useMemo(() => {
     if (!resultado) return null;
-    const total = resultado.total;
-    const validas = resultado.marcas.filter(m => m.estadoMarca === 'VALIDA').length;
-    const anomalias = resultado.marcas.filter(m => m.estadoMarca === 'ANULADA' || m.estadoJustificacion === 'RECHAZADA').length;
-    const pendientes = resultado.marcas.filter(m => m.estadoJustificacion === 'PENDIENTE').length;
+    const total = marcasFiltradas.length;
+    const validas = marcasFiltradas.filter(m => m.estadoMarca === 'VALIDA').length;
+    const anomalias = marcasFiltradas.filter(m => m.estadoMarca === 'ANULADA' || m.estadoJustificacion === 'RECHAZADA').length;
+    const pendientes = marcasFiltradas.filter(m => m.estadoJustificacion === 'PENDIENTE').length;
     return { total, validas, anomalias, pendientes };
-  }, [resultado]);
+  }, [resultado, marcasFiltradas]);
 
   const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -124,6 +136,21 @@ export default function ReportesPage() {
               max={today}
               onChange={e => setFechaFin(e.target.value)}
             />
+          </div>
+          <div className="form-group" style={{ flex: 2, minWidth: 200 }}>
+            <label className="form-label" htmlFor="reporte-busqueda">Buscar empleado</label>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: 'var(--color-text-muted)' }} />
+              <input
+                id="reporte-busqueda"
+                className="form-input"
+                type="text"
+                placeholder="Nombre o código..."
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
           </div>
           <button
             id="btn-buscar-reporte"
@@ -201,10 +228,10 @@ export default function ReportesPage() {
                   {resultado.total} evento(s)
                 </span>
               </div>
-              {resultado.marcas.length === 0 ? (
+              {marcasFiltradas.length === 0 ? (
                 <div className="empty-state">
                   <FileText size={40} />
-                  <p>No se encontraron registros para este período.</p>
+                  <p>{resultado.marcas.length === 0 ? 'No se encontraron registros para este período.' : 'No hay resultados que coincidan con la búsqueda.'}</p>
                 </div>
               ) : (
                 <div className="table-wrapper" style={{ border: 'none', borderRadius: 0, borderTop: 'none' }}>
@@ -220,7 +247,7 @@ export default function ReportesPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {resultado.marcas.map((m: MarcaResponse) => (
+                      {marcasFiltradas.map((m: MarcaResponse) => (
                         <tr key={m.marcaID}>
                           <td><code style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{m.codigoEmpleado}</code></td>
                           <td style={{ fontWeight: 500 }}>{m.nombreEmpleado}</td>
