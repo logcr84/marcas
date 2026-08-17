@@ -227,7 +227,7 @@ export default function ReportesPage() {
                           <td style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
                             {format(new Date(m.fechaHoraServidor), 'dd/MM/yyyy HH:mm')}
                           </td>
-                          <td><span className="badge badge-blue" style={{ fontWeight: 400 }}>{m.nombreTipoMarca}</span></td>
+                          <td><span className="badge badge-blue" style={{ fontWeight: 400 }}>{m.nombreTipoMarca || m.tipoMarca.replace(/_/g, ' ')}</span></td>
                           <td>{estadoBadge(m.estadoMarca)}</td>
                           <td>{justBadge(m.estadoJustificacion)}</td>
                         </tr>
