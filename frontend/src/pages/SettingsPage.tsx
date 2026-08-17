@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Settings, Check, Loader2, ChevronDown, ChevronRight, ShieldAlert } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const handleSave = () => {
     setIsSaving(true);
@@ -33,10 +35,10 @@ export default function SettingsPage() {
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Preferencias Generales</h2>
             <div className="form-group" style={{ marginBottom: 16 }}>
               <label className="form-label">Tema visual</label>
-              <select className="form-select">
-                <option>Oscuro (Predeterminado)</option>
-                <option>Claro</option>
-                <option>Automático</option>
+              <select className="form-select" value={theme} onChange={(e) => setTheme(e.target.value as 'dark'|'light'|'system')}>
+                <option value="dark">Oscuro</option>
+                <option value="light">Claro</option>
+                <option value="system">Automático (Sistema)</option>
               </select>
               <span style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4, display: 'block' }}>El tema oscuro reduce la fatiga visual en ambientes de poca luz.</span>
             </div>
