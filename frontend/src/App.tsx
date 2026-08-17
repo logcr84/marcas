@@ -7,6 +7,7 @@ import ReportesPage from './pages/ReportesPage';
 import JustificacionesPage from './pages/JustificacionesPage';
 import MisMarcasPage from './pages/MisMarcasPage';
 import EmpleadosPage from './pages/EmpleadosPage';
+import SettingsPage from './pages/SettingsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ function AppRoutes() {
         <Route path="justificaciones" element={<JustificacionesPage />} />
         <Route path="mis-marcas" element={<MisMarcasPage />} />
         <Route path="empleados" element={<EmpleadosPage />} />
+        <Route path="configuracion" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

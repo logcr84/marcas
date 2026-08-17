@@ -3,6 +3,14 @@ import { empleadosApi } from '../api/marcas';
 import type { EmpleadoResponse } from '../api/marcas';
 import { Search, Users } from 'lucide-react';
 
+function estadoBadge(estado: string) {
+  return (
+    <span className={`badge ${estado === 'ACTIVO' ? 'badge-green' : 'badge-gray'}`}>
+      {estado}
+    </span>
+  );
+}
+
 export default function EmpleadosPage() {
   const [lista, setLista] = useState<EmpleadoResponse[]>([]);
   const [busqueda, setBusqueda] = useState('');
@@ -57,33 +65,31 @@ export default function EmpleadosPage() {
             <p>No se encontraron empleados.</p>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Nombre completo</th>
-                  <th>Departamento</th>
-                  <th>Puesto</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lista.map(e => (
-                  <tr key={e.empleadoID}>
-                    <td><code style={{ fontSize: 12 }}>{e.codigoEmpleado}</code></td>
-                    <td>{e.nombreCompleto}</td>
-                    <td style={{ color: 'var(--color-text-muted)' }}>{e.departamento}</td>
-                    <td style={{ color: 'var(--color-text-muted)' }}>{e.puesto}</td>
-                    <td>
-                      <span className={`badge ${e.estado === 'ACTIVO' ? 'badge-green' : 'badge-gray'}`}>
-                        {e.estado}
-                      </span>
-                    </td>
+          <div className="card" style={{ padding: 0 }}>
+            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Nombre completo</th>
+                    <th>Departamento</th>
+                    <th>Puesto</th>
+                    <th style={{ width: 100 }}>Estado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {lista.map(e => (
+                    <tr key={e.empleadoID}>
+                      <td><code style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{e.codigoEmpleado}</code></td>
+                      <td style={{ fontWeight: 500 }}>{e.nombreCompleto}</td>
+                      <td style={{ color: 'var(--color-text-muted)' }}>{e.departamento}</td>
+                      <td style={{ color: 'var(--color-text-muted)' }}>{e.puesto}</td>
+                      <td>{estadoBadge(e.estado)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

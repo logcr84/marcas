@@ -1,7 +1,8 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, ClipboardCheck,
-  Clock, Users, Fingerprint, LogOut
+  Clock, Users, Fingerprint, LogOut, Settings, User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,8 +15,21 @@ const navItems = [
 ];
 
 export default function Layout() {
+  const navigate = useNavigate();
   const { user, logout, hasRole } = useAuth();
   const initials = user?.login.slice(0, 2).toUpperCase() ?? 'US';
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="layout">
@@ -51,20 +65,32 @@ export default function Layout() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">{initials}</div>
-            <div className="user-details">
-              <div className="user-name">{user?.login}</div>
-              <div className="user-role">{user?.roles[0]}</div>
-            </div>
+          <div className="dropdown" ref={menuRef} style={{ width: '100%' }}>
             <button
-              className="btn-logout"
-              onClick={logout}
-              title="Cerrar sesión"
-              id="btn-logout"
+              className="user-info"
+              onClick={() => setMenuOpen(!menuOpen)}
+              style={{ width: '100%', background: menuOpen ? 'var(--color-surface-hover)' : 'transparent', textAlign: 'left', border: 'none' }}
             >
-              <LogOut size={16} />
+              <div className="user-avatar">{initials}</div>
+              <div className="user-details">
+                <div className="user-name">{user?.login}</div>
+                <div className="user-role">{user?.roles[0]}</div>
+              </div>
             </button>
+            {menuOpen && (
+              <div className="dropdown-menu dropdown-menu-up">
+                <button className="dropdown-item" onClick={() => { setMenuOpen(false); navigate('/perfil'); }}>
+                  <span className="dropdown-icon"><User size={15} /></span> Mi Perfil
+                </button>
+                <button className="dropdown-item" onClick={() => { setMenuOpen(false); navigate('/configuracion'); }}>
+                  <span className="dropdown-icon"><Settings size={15} /></span> Configuración
+                </button>
+                <div style={{ height: 1, background: 'var(--color-border)', margin: '4px 0' }} />
+                <button className="dropdown-item danger" onClick={() => { setMenuOpen(false); logout(); }}>
+                  <span className="dropdown-icon"><LogOut size={15} /></span> Cerrar sesión
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>

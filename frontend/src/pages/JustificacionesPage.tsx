@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { justificacionesApi } from '../api/marcas';
 import type { JustificacionResponse } from '../api/marcas';
 import { useAuth } from '../context/AuthContext';
-import { Plus, X, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, X, CheckCircle, XCircle, FileText } from 'lucide-react';
+import DropdownMenu from '../components/DropdownMenu';
 
 function estadoBadge(estado: string) {
   const map: Record<string, string> = {
@@ -58,7 +59,7 @@ export default function JustificacionesPage() {
       await justificacionesApi.resolver(resolverModal.id, resolverModal.estado, comentario);
       setResolverModal(null);
       setComentario('');
-      showToast(`Justificación ${resolverModal.estado} correctamente.`);
+      showToast(`Justificación ${resolverModal.estado.toLowerCase()} correctamente.`);
       cargar();
     } catch {
       alert('Error al resolver la justificación.');
@@ -96,62 +97,55 @@ export default function JustificacionesPage() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: 40 }}><div className="spinner" /></div>
         ) : lista.length === 0 ? (
-          <div className="empty-state"><p>No hay justificaciones que mostrar.</p></div>
+          <div className="empty-state">
+            <FileText size={40} />
+            <p>No hay justificaciones que mostrar.</p>
+          </div>
         ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Empleado</th>
-                  <th>Departamento</th>
-                  <th>Motivo</th>
-                  <th>Período</th>
-                  <th>Estado</th>
-                  <th>Solicitado</th>
-                  {esAdmin && <th>Acciones</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {lista.map(j => (
-                  <tr key={j.justificacionID}>
-                    <td style={{ color: 'var(--color-text-muted)' }}>#{j.justificacionID}</td>
-                    <td>{j.nombreEmpleado}</td>
-                    <td style={{ color: 'var(--color-text-muted)' }}>{j.departamento}</td>
-                    <td>{j.motivo}</td>
-                    <td style={{ fontSize: 12 }}>{j.fechaInicio} → {j.fechaFin}</td>
-                    <td>{estadoBadge(j.estadoJustificacion)}</td>
-                    <td style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
-                      {new Date(j.fechaSolicitud).toLocaleDateString('es-CR')}
-                    </td>
-                    {esAdmin && (
-                      <td>
-                        {j.estadoJustificacion === 'PENDIENTE' && (
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button
-                              className="btn btn-sm btn-success"
-                              id={`btn-aprobar-${j.justificacionID}`}
-                              onClick={() => setResolverModal({ id: j.justificacionID, estado: 'APROBADA' })}
-                              title="Aprobar"
-                            >
-                              <CheckCircle size={13} />
-                            </button>
-                            <button
-                              className="btn btn-sm btn-danger"
-                              id={`btn-rechazar-${j.justificacionID}`}
-                              onClick={() => setResolverModal({ id: j.justificacionID, estado: 'RECHAZADA' })}
-                              title="Rechazar"
-                            >
-                              <XCircle size={13} />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    )}
+          <div className="card" style={{ padding: 0 }}>
+            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Empleado</th>
+                    <th>Departamento</th>
+                    <th>Motivo</th>
+                    <th style={{ textAlign: 'center' }}>Período</th>
+                    <th>Estado</th>
+                    <th style={{ textAlign: 'center' }}>Solicitado</th>
+                    {esAdmin && <th style={{ width: 50, textAlign: 'center' }}>Acciones</th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {lista.map(j => (
+                    <tr key={j.justificacionID}>
+                      <td style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>#{j.justificacionID}</td>
+                      <td style={{ fontWeight: 500 }}>{j.nombreEmpleado}</td>
+                      <td style={{ color: 'var(--color-text-muted)' }}>{j.departamento}</td>
+                      <td>{j.motivo}</td>
+                      <td style={{ fontSize: 12, textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                        {j.fechaInicio.split('-').reverse().join('/')} - {j.fechaFin.split('-').reverse().join('/')}
+                      </td>
+                      <td>{estadoBadge(j.estadoJustificacion)}</td>
+                      <td style={{ color: 'var(--color-text-muted)', fontSize: 12, textAlign: 'center' }}>
+                        {new Date(j.fechaSolicitud).toLocaleDateString('es-CR')}
+                      </td>
+                      {esAdmin && (
+                        <td style={{ textAlign: 'center' }}>
+                          {j.estadoJustificacion === 'PENDIENTE' && (
+                            <DropdownMenu items={[
+                              { label: 'Aprobar', icon: <CheckCircle size={14} />, onClick: () => setResolverModal({ id: j.justificacionID, estado: 'APROBADA' }) },
+                              { label: 'Rechazar', icon: <XCircle size={14} />, onClick: () => setResolverModal({ id: j.justificacionID, estado: 'RECHAZADA' }), danger: true }
+                            ]} />
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -212,7 +206,7 @@ export default function JustificacionesPage() {
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
             <div className="modal-header">
               <div className="modal-title">
-                {resolverModal.estado === 'APROBADA' ? '✅ Aprobar' : '❌ Rechazar'} Justificación #{resolverModal.id}
+                {resolverModal.estado === 'APROBADA' ? 'Aprobar' : 'Rechazar'} Justificación #{resolverModal.id}
               </div>
               <button className="btn-close" onClick={() => setResolverModal(null)}><X size={18} /></button>
             </div>
@@ -220,7 +214,7 @@ export default function JustificacionesPage() {
               <div className="form-group">
                 <label className="form-label">Comentario (opcional)</label>
                 <textarea className="form-textarea" maxLength={1000}
-                  placeholder="Comentario de resolución..."
+                  placeholder="Añada un comentario a esta resolución..."
                   value={comentario}
                   onChange={e => setComentario(e.target.value)} />
               </div>

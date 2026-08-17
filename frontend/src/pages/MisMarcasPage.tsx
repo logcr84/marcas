@@ -3,7 +3,7 @@ import { marcasApi } from '../api/marcas';
 import type { MarcaResponse } from '../api/marcas';
 import { useAuth } from '../context/AuthContext';
 import { format, subDays, differenceInDays } from 'date-fns';
-import { Search, AlertCircle } from 'lucide-react';
+import { Search, AlertCircle, FileText } from 'lucide-react';
 
 export default function MisMarcasPage() {
   const { user } = useAuth();
@@ -65,18 +65,24 @@ export default function MisMarcasPage() {
         {error && <div className="error-msg" style={{ marginBottom: 16 }}><AlertCircle size={16} style={{ display: 'inline', marginRight: 8 }} />{error}</div>}
 
         {buscado && (
-          <div className="card">
-            <div style={{ marginBottom: 14, fontSize: 13, color: 'var(--color-text-muted)' }}>
-              {marcas.length} marca(s) en el período
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600 }}>Registro de Marcas</h3>
+              <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
+                {marcas.length} marca(s)
+              </span>
             </div>
             {marcas.length === 0 ? (
-              <div className="empty-state"><p>No se encontraron marcas en el período seleccionado.</p></div>
+              <div className="empty-state">
+                <FileText size={40} />
+                <p>No se encontraron marcas en el período seleccionado.</p>
+              </div>
             ) : (
-              <div className="table-wrapper">
+              <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
                 <table>
                   <thead>
                     <tr>
-                      <th>Fecha y Hora</th>
+                      <th style={{ textAlign: 'center' }}>Fecha y Hora</th>
                       <th>Tipo</th>
                       <th>Estado</th>
                       <th>Observación</th>
@@ -85,7 +91,9 @@ export default function MisMarcasPage() {
                   <tbody>
                     {marcas.map(m => (
                       <tr key={m.marcaID}>
-                        <td>{new Date(m.fechaHoraServidor).toLocaleString('es-CR')}</td>
+                        <td style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                          {format(new Date(m.fechaHoraServidor), 'dd/MM/yyyy HH:mm')}
+                        </td>
                         <td><span className={`badge ${tipoColor(m.tipoMarca)}`}>{m.nombreTipoMarca}</span></td>
                         <td>
                           <span className={`badge ${m.estadoMarca === 'VALIDA' ? 'badge-green' : 'badge-red'}`}>
