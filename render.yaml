@@ -45,7 +45,6 @@ services:
     runtime: static
     name: marcas-frontend
     plan: free
-    region: oregon
     branch: main
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
