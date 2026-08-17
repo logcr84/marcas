@@ -1,5 +1,5 @@
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Npgsql;
 using System.Data;
 
 namespace Marcas.Infrastructure.Data;
@@ -16,6 +16,6 @@ public class DbConnectionFactory
 
     public IDbConnection CreateConnection()
     {
-        return new SqlConnection(_connectionString);
+        return new NpgsqlConnection(_connectionString);
     }
 }

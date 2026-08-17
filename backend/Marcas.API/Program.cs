@@ -8,6 +8,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Render.com: escuchar en el puerto que inyecta la plataforma ──────────
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // ── Servicios de infraestructura ──────────────────────────────
 builder.Services.AddSingleton<DbConnectionFactory>();
 
@@ -55,18 +59,15 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // ── Pipeline ──────────────────────────────────────────────────
-if (app.Environment.IsDevelopment())
+// OpenAPI/Scalar disponible en todos los entornos para facilitar la validación post-deploy
+app.MapOpenApi();
+app.MapScalarApiReference(options =>
 {
-    app.MapOpenApi();
-    // Scalar UI es la alternativa moderna a Swagger UI en .NET 10
-    app.MapScalarApiReference(options =>
-    {
-        options.Title = "Marcas API";
-        options.WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
-    });
-}
+    options.Title = "Marcas API";
+    options.WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+});
 
-app.UseHttpsRedirection();
+// NOTA: UseHttpsRedirection eliminado — Render maneja TLS en el edge (reverse proxy)
 app.UseCors("PortalPolicy");
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,0 +1,52 @@
+# ============================================================
+# Render Blueprint — Sistema de Control de Marcas
+# Plan: Gratuito (Free)
+# Docs: https://render.com/docs/blueprint-spec
+# ============================================================
+
+services:
+  # ──────────────────────────────────────────────────────────
+  # Web Service: ASP.NET Core 10 + React (imagen Docker unificada)
+  # ──────────────────────────────────────────────────────────
+  - type: web
+    name: marcas-api
+    runtime: docker
+    plan: free
+    region: oregon              # us-west-2 — menor latencia desde CR
+    branch: main
+    dockerfilePath: ./Dockerfile
+
+    # Variables de entorno en producción
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+
+      # La connection string se inyecta automáticamente desde la BD
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: marcas-db
+          property: connectionString
+
+      # Secreto JWT — Render genera un valor aleatorio seguro
+      - key: JwtSettings__SecretKey
+        generateValue: true
+
+      # CORS: permitir el propio dominio de Render (se actualiza con la URL real)
+      - key: Cors__AllowedOrigins__0
+        value: https://marcas-api.onrender.com
+
+    # Health check (opcional pero recomendado — Render lo usa para saber si el servicio está listo)
+    healthCheckPath: /scalar/v1
+
+# ──────────────────────────────────────────────────────────────
+# Base de Datos PostgreSQL (plan gratuito de Render)
+# ADVERTENCIA: El plan free se elimina a los 90 días.
+# Para producción real, considerar el plan Starter ($7/mes).
+# ──────────────────────────────────────────────────────────────
+databases:
+  - name: marcas-db
+    plan: free
+    region: oregon
+    databaseName: marcas
+    user: marcas_user
+    ipAllowList: []             # Solo acceso interno desde los servicios de Render
