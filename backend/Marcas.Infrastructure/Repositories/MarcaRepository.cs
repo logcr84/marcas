@@ -18,7 +18,7 @@ public class MarcaRepository : IMarcaRepository
 
         // Verificar si ya existe una marca con ese IdempotencyKey
         var existente = await conn.QueryFirstOrDefaultAsync<Marca>(
-            "SELECT * FROM asistencia.Marca WHERE IdempotencyKey = @IdempotencyKey",
+            "SELECT * FROM asistencia.\"Marca\" WHERE \"IdempotencyKey\" = @IdempotencyKey",
             new { req.IdempotencyKey });
 
         if (existente is not null)
@@ -26,11 +26,11 @@ public class MarcaRepository : IMarcaRepository
 
         // Insertar nueva marca (la hora la pone el servidor con DEFAULT)
         const string sql = """
-            INSERT INTO asistencia.Marca
-                (EmpleadoID, TipoMarcaID, AgenteID, FechaHoraCliente, IdempotencyKey, ObservacionTecnica)
-            OUTPUT INSERTED.*
+            INSERT INTO asistencia."Marca"
+                ("EmpleadoID", "TipoMarcaID", "AgenteID", "FechaHoraCliente", "IdempotencyKey", "ObservacionTecnica")
             VALUES
-                (@EmpleadoID, @TipoMarcaID, @AgenteID, @FechaHoraCliente, @IdempotencyKey, @ObservacionTecnica);
+                (@EmpleadoID, @TipoMarcaID, @AgenteID, @FechaHoraCliente, @IdempotencyKey, @ObservacionTecnica)
+            RETURNING *;
             """;
 
         var nueva = await conn.QueryFirstAsync<Marca>(sql, new
@@ -51,9 +51,8 @@ public class MarcaRepository : IMarcaRepository
     {
         using var conn = _factory.CreateConnection();
         var result = await conn.QueryAsync<MarcaResponse>(
-            "asistencia.sp_ReporteMarcasEmpleado",
-            new { EmpleadoID = empleadoId, FechaInicio = fechaInicio.ToString("yyyy-MM-dd"), FechaFin = fechaFin.ToString("yyyy-MM-dd") },
-            commandType: System.Data.CommandType.StoredProcedure);
+            "SELECT * FROM asistencia.fn_ReporteMarcasEmpleado(@EmpleadoID, @FechaInicio::DATE, @FechaFin::DATE)",
+            new { EmpleadoID = empleadoId, FechaInicio = fechaInicio.ToString("yyyy-MM-dd"), FechaFin = fechaFin.ToString("yyyy-MM-dd") });
         return result.ToList();
     }
 
@@ -62,15 +61,14 @@ public class MarcaRepository : IMarcaRepository
     {
         using var conn = _factory.CreateConnection();
         var result = await conn.QueryAsync<MarcaResponse>(
-            "asistencia.sp_ReporteGeneralMarcas",
+            "SELECT * FROM asistencia.fn_ReporteGeneralMarcas(@FechaInicio::DATE, @FechaFin::DATE, @DepartamentoID, @EstadoMarca)",
             new
             {
                 FechaInicio = fechaInicio.ToString("yyyy-MM-dd"),
                 FechaFin = fechaFin.ToString("yyyy-MM-dd"),
                 DepartamentoID = departamentoId,
                 EstadoMarca = estadoMarca
-            },
-            commandType: System.Data.CommandType.StoredProcedure);
+            });
         return result.ToList();
     }
 }

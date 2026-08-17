@@ -15,9 +15,9 @@ public class UsuarioRepository : IUsuarioRepository
     {
         using var conn = _factory.CreateConnection();
         const string sql = """
-            SELECT u.UsuarioID, u.EmpleadoID, u.Login, u.LoginWindows, u.HashPassword, u.Estado, u.UltimoAcceso
-            FROM seguridad.UsuarioWeb u
-            WHERE u.Login = @Login AND u.Estado = 'ACTIVO';
+            SELECT u."UsuarioID", u."EmpleadoID", u."Login", u."LoginWindows", u."HashPassword", u."Estado", u."UltimoAcceso"
+            FROM seguridad."UsuarioWeb" u
+            WHERE u."Login" = @Login AND u."Estado" = 'ACTIVO';
             """;
         var usuario = await conn.QueryFirstOrDefaultAsync<UsuarioWeb>(sql, new { Login = login });
         if (usuario is null) return null;
@@ -34,9 +34,9 @@ public class UsuarioRepository : IUsuarioRepository
     {
         using var conn = _factory.CreateConnection();
         const string sql = """
-            SELECT u.UsuarioID, u.EmpleadoID, u.Login, u.LoginWindows, u.HashPassword, u.Estado, u.UltimoAcceso
-            FROM seguridad.UsuarioWeb u
-            WHERE u.LoginWindows = @LoginWindows AND u.Estado = 'ACTIVO';
+            SELECT u."UsuarioID", u."EmpleadoID", u."Login", u."LoginWindows", u."HashPassword", u."Estado", u."UltimoAcceso"
+            FROM seguridad."UsuarioWeb" u
+            WHERE u."LoginWindows" = @LoginWindows AND u."Estado" = 'ACTIVO';
             """;
         var usuario = await conn.QueryFirstOrDefaultAsync<UsuarioWeb>(sql, new { LoginWindows = loginWindows });
         if (usuario is null) return null;
@@ -49,7 +49,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         using var conn = _factory.CreateConnection();
         await conn.ExecuteAsync(
-            "UPDATE seguridad.UsuarioWeb SET UltimoAcceso = SYSUTCDATETIME() WHERE UsuarioID = @UsuarioID",
+            "UPDATE seguridad.\"UsuarioWeb\" SET \"UltimoAcceso\" = CURRENT_TIMESTAMP WHERE \"UsuarioID\" = @UsuarioID",
             new { UsuarioID = usuarioId });
     }
 
@@ -57,10 +57,10 @@ public class UsuarioRepository : IUsuarioRepository
     private static async Task<List<string>> CargarRolesAsync(System.Data.IDbConnection conn, long usuarioId)
     {
         const string sql = """
-            SELECT r.Nombre
-            FROM seguridad.UsuarioRol ur
-            JOIN seguridad.Rol r ON r.RolID = ur.RolID
-            WHERE ur.UsuarioID = @UsuarioID;
+            SELECT r."Nombre"
+            FROM seguridad."UsuarioRol" ur
+            JOIN seguridad."Rol" r ON r."RolID" = ur."RolID"
+            WHERE ur."UsuarioID" = @UsuarioID;
             """;
         var roles = await conn.QueryAsync<string>(sql, new { UsuarioID = usuarioId });
         return roles.ToList();
