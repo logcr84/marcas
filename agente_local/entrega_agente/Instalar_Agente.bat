@@ -44,12 +44,34 @@ copy /Y "%~dp0appsettings.json" "%INSTALL_DIR%\appsettings.json" >nul
 echo        Archivos copiados correctamente.
 
 echo.
-echo  [3/5] Configuracion de Perfil del Usuario...
-echo  Para autocompletar su informacion al crear el usuario.
-set /p USER_DEPTO="  Ingrese su Departamento (ej. Recursos Humanos): "
-set /p USER_PUESTO="  Ingrese su Puesto (ej. Analista): "
-set /p USER_NOMBRE="  Ingrese su Nombre Completo: "
-set /p USER_EMAIL="  Ingrese su Email / UPN: "
+echo  [3/5] Obteniendo configuracion de Perfil del Usuario...
+echo  Intentando obtener informacion desde Active Directory...
+set "USER_DEPTO="
+set "USER_PUESTO="
+set "USER_NOMBRE="
+set "USER_EMAIL="
+
+for /f "tokens=1,* delims==" %%A in ('powershell -NoProfile -Command "$ErrorActionPreference='Stop'; try { $s = New-Object -ComObject 'ADSystemInfo'; $u = [ADSI]('LDAP://'+$s.UserName); Write-Output ('USER_DEPTO='+$u.Department); Write-Output ('USER_PUESTO='+$u.Title); Write-Output ('USER_NOMBRE='+$u.DisplayName); Write-Output ('USER_EMAIL='+$u.mail) } catch {}"') do (
+    if "%%A"=="USER_DEPTO" set "USER_DEPTO=%%B"
+    if "%%A"=="USER_PUESTO" set "USER_PUESTO=%%B"
+    if "%%A"=="USER_NOMBRE" set "USER_NOMBRE=%%B"
+    if "%%A"=="USER_EMAIL" set "USER_EMAIL=%%B"
+)
+
+if "%USER_NOMBRE%"=="" (
+    echo  No se pudo obtener la informacion automaticamente.
+    echo  Por favor, ingrese sus datos manualmente.
+    set /p USER_DEPTO="  Ingrese su Departamento (ej. Recursos Humanos): "
+    set /p USER_PUESTO="  Ingrese su Puesto (ej. Analista): "
+    set /p USER_NOMBRE="  Ingrese su Nombre Completo: "
+    set /p USER_EMAIL="  Ingrese su Email / UPN: "
+) else (
+    echo  Datos obtenidos exitosamente de Active Directory:
+    echo    Nombre:       %USER_NOMBRE%
+    echo    Email:        %USER_EMAIL%
+    echo    Departamento: %USER_DEPTO%
+    echo    Puesto:       %USER_PUESTO%
+)
 
 if not "%USER_DEPTO%"=="" setx USER_DEPARTAMENTO "%USER_DEPTO%" >nul
 if not "%USER_PUESTO%"=="" setx USER_PUESTO "%USER_PUESTO%" >nul
