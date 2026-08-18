@@ -4,6 +4,7 @@ import type { MarcaResponse } from '../api/marcas';
 import { useAuth } from '../context/AuthContext';
 import { format, subDays, differenceInDays } from 'date-fns';
 import { Search, AlertCircle, FileText, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 
 function KpiCard({ title, value, trend, trendValue, trendUpIsGood = true }: { title: string, value: string | number, trend: 'up' | 'down' | 'neutral', trendValue: string, trendUpIsGood?: boolean }) {
   const isUp = trend === 'up';
@@ -33,6 +34,7 @@ export default function MisMarcasPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [buscado, setBuscado] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleBuscar = async () => {
     setError('');
@@ -44,6 +46,7 @@ export default function MisMarcasPage() {
       const data = await marcasApi.porEmpleado(user.empleadoID, fechaInicio, fechaFin);
       setMarcas(data);
       setBuscado(true);
+      setCurrentPage(1);
     } catch (e: any) {
       setError(e.response?.data?.mensaje ?? 'Error al obtener marcas.');
     } finally {
@@ -126,7 +129,7 @@ export default function MisMarcasPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {marcas.map(m => (
+                      {marcas.slice((currentPage - 1) * 10, currentPage * 10).map(m => (
                         <tr key={m.marcaID}>
                           <td style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
                             {format(new Date(m.fechaHoraServidor), 'dd/MM/yyyy HH:mm')}
@@ -147,6 +150,13 @@ export default function MisMarcasPage() {
                 </div>
               )}
             </div>
+            {marcas.length > 0 && (
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={Math.ceil(marcas.length / 10)} 
+                onPageChange={setCurrentPage} 
+              />
+            )}
           </>
         )}
       </div>

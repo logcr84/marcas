@@ -3,6 +3,7 @@ import { marcasApi } from '../api/marcas';
 import type { MarcaResponse, ReporteMarcasResponse } from '../api/marcas';
 import { format, differenceInDays } from 'date-fns';
 import { Search, AlertCircle, FileText, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 import { 
   PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
@@ -50,6 +51,7 @@ export default function ReportesPage() {
   const [resultado, setResultado] = useState<ReporteMarcasResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleBuscar = async () => {
     setError('');
@@ -80,6 +82,9 @@ export default function ReportesPage() {
       m.codigoEmpleado.toLowerCase().includes(q)
     );
   }, [resultado, busqueda]);
+
+  // Reset page when filter or results change
+  useMemo(() => { setCurrentPage(1); }, [marcasFiltradas]);
 
   const chartData = useMemo(() => {
     if (marcasFiltradas.length === 0) return { estados: [], tipos: [] };
@@ -247,7 +252,7 @@ export default function ReportesPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {marcasFiltradas.map((m: MarcaResponse) => (
+                      {marcasFiltradas.slice((currentPage - 1) * 10, currentPage * 10).map((m: MarcaResponse) => (
                         <tr key={m.marcaID}>
                           <td><code style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{m.codigoEmpleado}</code></td>
                           <td style={{ fontWeight: 500 }}>{m.nombreEmpleado}</td>
@@ -264,6 +269,13 @@ export default function ReportesPage() {
                 </div>
               )}
             </div>
+            {marcasFiltradas.length > 0 && (
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={Math.ceil(marcasFiltradas.length / 10)} 
+                onPageChange={setCurrentPage} 
+              />
+            )}
           </>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { empleadosApi } from '../api/marcas';
+import { Pagination } from '../components/Pagination';
 import type { EmpleadoResponse } from '../api/marcas';
 import { Search, Users, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -34,12 +35,14 @@ export default function EmpleadosPage() {
   const [lista, setLista] = useState<EmpleadoResponse[]>([]);
   const [busqueda, setBusqueda] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const cargar = async (b?: string) => {
     setLoading(true);
     try {
       const data = await empleadosApi.listar(b || undefined);
       setLista(data);
+      setCurrentPage(1);
     } finally {
       setLoading(false);
     }
@@ -121,7 +124,7 @@ export default function EmpleadosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {lista.map(e => (
+                  {lista.slice((currentPage - 1) * 10, currentPage * 10).map(e => (
                     <tr key={e.empleadoID}>
                       <td><code style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{e.codigoEmpleado}</code></td>
                       <td style={{ fontWeight: 500 }}>{e.nombreCompleto}</td>
@@ -133,6 +136,11 @@ export default function EmpleadosPage() {
                 </tbody>
               </table>
             </div>
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={Math.ceil(lista.length / 10)} 
+              onPageChange={setCurrentPage} 
+            />
           </div>
         )}
       </div>

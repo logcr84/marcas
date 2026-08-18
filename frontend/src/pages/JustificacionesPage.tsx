@@ -4,6 +4,7 @@ import type { JustificacionResponse } from '../api/marcas';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X, CheckCircle, XCircle, FileText, ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import DropdownMenu from '../components/DropdownMenu';
+import { Pagination } from '../components/Pagination';
 
 function KpiCard({ title, value, trend, trendValue, trendUpIsGood = true }: { title: string, value: string | number, trend: 'up' | 'down' | 'neutral', trendValue: string, trendUpIsGood?: boolean }) {
   const isUp = trend === 'up';
@@ -37,6 +38,7 @@ export default function JustificacionesPage() {
   const [lista, setLista] = useState<JustificacionResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -57,7 +59,10 @@ export default function JustificacionesPage() {
     }
   };
 
-  useEffect(() => { cargar(); }, [filtroEstado]);
+  useEffect(() => { 
+    cargar(); 
+    setCurrentPage(1);
+  }, [filtroEstado]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -162,7 +167,7 @@ export default function JustificacionesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {lista.map(j => (
+                  {lista.slice((currentPage - 1) * 10, currentPage * 10).map(j => (
                     <tr key={j.justificacionID}>
                       <td style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>#{j.justificacionID}</td>
                       <td style={{ fontWeight: 500 }}>{j.nombreEmpleado}</td>
@@ -190,6 +195,11 @@ export default function JustificacionesPage() {
                 </tbody>
               </table>
             </div>
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={Math.ceil(lista.length / 10)} 
+              onPageChange={setCurrentPage} 
+            />
           </div>
         )}
       </div>
