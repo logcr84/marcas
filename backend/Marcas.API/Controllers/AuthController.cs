@@ -98,7 +98,11 @@ public class AuthController : ControllerBase
                     request.Puesto,
                     request.NombreCompleto);
 
-                await _usuarios.CrearUsuarioAgenteAsync(nuevoEmpleadoId, loginWindowsDecrypted);
+                // Generar hash de clave genérica inicial (el empleado la cambia en su primer acceso al portal)
+                var claveGenerica = $"Marcas{loginWindowsDecrypted}2026!";
+                var hashInicial = BCrypt.Net.BCrypt.HashPassword(claveGenerica);
+
+                await _usuarios.CrearUsuarioAgenteAsync(nuevoEmpleadoId, loginWindowsDecrypted, hashInicial);
                 
                 // Recargar el usuario recién creado
                 usuario = await _usuarios.ObtenerPorLoginWindowsAsync(loginWindowsDecrypted);
