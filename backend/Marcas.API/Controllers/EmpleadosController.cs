@@ -51,6 +51,7 @@ public class EmpleadosController : ControllerBase
         public string NombreCompleto { get; set; } = string.Empty;
         public string Departamento { get; set; } = string.Empty;
         public string Puesto { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
 
     /// <summary>Actualiza el perfil del empleado logueado.</summary>
@@ -62,7 +63,7 @@ public class EmpleadosController : ControllerBase
         if (!long.TryParse(empleadoIdClaim, out var empleadoId) || empleadoId <= 0)
             return Forbid();
 
-        await _empleados.ActualizarPerfilAsync(empleadoId, req.CodigoEmpleado, req.NombreCompleto, req.Departamento, req.Puesto);
+        await _empleados.ActualizarPerfilAsync(empleadoId, req.CodigoEmpleado, req.NombreCompleto, req.Departamento, req.Puesto, req.Email);
         return NoContent();
     }
 }

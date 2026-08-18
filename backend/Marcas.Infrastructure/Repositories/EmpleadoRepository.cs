@@ -19,6 +19,7 @@ public class EmpleadoRepository : IEmpleadoRepository
                    e."Nombre" || ' ' || e."PrimerApellido" || COALESCE(' ' || e."SegundoApellido", '') AS "NombreCompleto",
                    d."Nombre" AS "Departamento",
                    p."Nombre" AS "Puesto",
+                   e."Email",
                    e."Estado"
             FROM rrhh."Empleado" e
             JOIN rrhh."Departamento" d ON d."DepartamentoID" = e."DepartamentoID"
@@ -42,6 +43,7 @@ public class EmpleadoRepository : IEmpleadoRepository
                    e."Nombre" || ' ' || e."PrimerApellido" || COALESCE(' ' || e."SegundoApellido", '') AS "NombreCompleto",
                    d."Nombre" AS "Departamento",
                    p."Nombre" AS "Puesto",
+                   e."Email",
                    e."Estado"
             FROM rrhh."Empleado" e
             JOIN rrhh."Departamento" d ON d."DepartamentoID" = e."DepartamentoID"
@@ -51,7 +53,7 @@ public class EmpleadoRepository : IEmpleadoRepository
         return await conn.QueryFirstOrDefaultAsync<EmpleadoResponse>(sql, new { EmpleadoID = empleadoId });
     }
 
-    public async Task<long> CrearEmpleadoGenericoAsync(string loginWindows, string? departamento = null, string? puesto = null, string? nombreCompleto = null)
+    public async Task<long> CrearEmpleadoGenericoAsync(string loginWindows, string? departamento = null, string? puesto = null, string? nombreCompleto = null, string? email = null)
     {
         using var conn = _factory.CreateConnection();
         
@@ -92,10 +94,10 @@ public class EmpleadoRepository : IEmpleadoRepository
         const string sqlEmpleado = """
             INSERT INTO rrhh."Empleado" (
                 "CodigoEmpleado", "Identificacion", "Nombre", "PrimerApellido", 
-                "DepartamentoID", "PuestoID", "FechaIngreso", "Estado"
+                "DepartamentoID", "PuestoID", "FechaIngreso", "Estado", "Email"
             ) VALUES (
                 'TEMP', @Identificacion, @Nombre, @Apellido, 
-                @Depto, @Puesto, CURRENT_DATE, 'ACTIVO'
+                @Depto, @Puesto, CURRENT_DATE, 'ACTIVO', @Email
             ) RETURNING "EmpleadoID";
             """;
         var empId = await conn.ExecuteScalarAsync<long>(sqlEmpleado, new
@@ -104,7 +106,8 @@ public class EmpleadoRepository : IEmpleadoRepository
             Nombre = nombreFinal,
             Apellido = apellidoFinal,
             Depto = deptoId,
-            Puesto = puestoId
+            Puesto = puestoId,
+            Email = email
         });
 
         // Generar código estandarizado basado en el ID
@@ -114,7 +117,7 @@ public class EmpleadoRepository : IEmpleadoRepository
         return empId;
     }
 
-    public async Task ActualizarPerfilAsync(long empleadoId, string codigoEmpleado, string nombreCompleto, string departamento, string puesto)
+    public async Task ActualizarPerfilAsync(long empleadoId, string codigoEmpleado, string nombreCompleto, string departamento, string puesto, string email)
     {
         using var conn = _factory.CreateConnection();
 
@@ -150,7 +153,8 @@ public class EmpleadoRepository : IEmpleadoRepository
                 "PrimerApellido" = @Apellido,
                 "SegundoApellido" = NULL,
                 "DepartamentoID" = @DeptoId,
-                "PuestoID" = @PuestoId
+                "PuestoID" = @PuestoId,
+                "Email" = @Email
             WHERE "EmpleadoID" = @EmpleadoId;
             """;
 
@@ -161,6 +165,7 @@ public class EmpleadoRepository : IEmpleadoRepository
             Apellido = apellidoFinal,
             DeptoId = deptoId,
             PuestoId = puestoId,
+            Email = email,
             EmpleadoId = empleadoId
         });
     }

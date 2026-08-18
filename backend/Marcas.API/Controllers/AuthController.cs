@@ -96,7 +96,8 @@ public class AuthController : ControllerBase
                     loginWindowsDecrypted,
                     request.Departamento,
                     request.Puesto,
-                    request.NombreCompleto);
+                    request.NombreCompleto,
+                    request.Email);
 
                 // Generar hash de clave genérica inicial (el empleado la cambia en su primer acceso al portal)
                 var claveGenerica = $"Marcas{loginWindowsDecrypted}2026!";

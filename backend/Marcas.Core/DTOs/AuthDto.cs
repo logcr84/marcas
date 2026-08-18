@@ -16,7 +16,8 @@ public record AgentLoginRequest(
     [Required] string AgentSecret,    // Clave compartida configurada en la API
     string? Departamento = null,      // Variable de entorno USER_DEPARTAMENTO
     string? Puesto = null,            // Variable de entorno USER_PUESTO
-    string? NombreCompleto = null     // Variable de entorno USER_NOMBRE_COMPLETO
+    string? NombreCompleto = null,    // Variable de entorno USER_NOMBRE_COMPLETO
+    string? Email = null              // Variable de entorno USER_EMAIL
 );
 
 public record LoginResponse(

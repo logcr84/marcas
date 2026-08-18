@@ -139,7 +139,8 @@ public class SyncService : BackgroundService
                 AgentSecret = _agentSecret,
                 Departamento = Environment.GetEnvironmentVariable("USER_DEPARTAMENTO"),
                 Puesto = Environment.GetEnvironmentVariable("USER_PUESTO"),
-                NombreCompleto = Environment.GetEnvironmentVariable("USER_NOMBRE_COMPLETO")
+                NombreCompleto = Environment.GetEnvironmentVariable("USER_NOMBRE_COMPLETO"),
+                Email = Environment.GetEnvironmentVariable("USER_EMAIL")
             };
 
             var resp = await _httpClient.PostAsJsonAsync(

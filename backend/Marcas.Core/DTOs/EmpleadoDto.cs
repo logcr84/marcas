@@ -6,5 +6,6 @@ public record EmpleadoResponse(
     string NombreCompleto,
     string Departamento,
     string Puesto,
+    string Email,
     string Estado
 );

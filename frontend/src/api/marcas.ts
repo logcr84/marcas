@@ -43,6 +43,7 @@ export interface EmpleadoResponse {
   nombreCompleto: string;
   departamento: string;
   puesto: string;
+  email?: string;
   estado: string;
 }
 
@@ -74,6 +75,6 @@ export const empleadosApi = {
     api.get<EmpleadoResponse[]>('/empleados', { params: { busqueda } }).then(r => r.data),
   obtenerPorId: (id: number) =>
     api.get<EmpleadoResponse>(`/empleados/${id}`).then(r => r.data),
-  actualizarPerfil: (data: { codigoEmpleado: string; nombreCompleto: string; departamento: string; puesto: string }) =>
+  actualizarPerfil: (data: { codigoEmpleado: string; nombreCompleto: string; departamento: string; puesto: string; email: string }) =>
     api.put('/empleados/perfil', data).then(r => r.data),
 };

@@ -12,7 +12,8 @@ export default function ProfilePage() {
     codigoEmpleado: '',
     nombreCompleto: '',
     departamento: '',
-    puesto: ''
+    puesto: '',
+    email: ''
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,7 +24,8 @@ export default function ProfilePage() {
           codigoEmpleado: data.codigoEmpleado || '',
           nombreCompleto: data.nombreCompleto || '',
           departamento: data.departamento || '',
-          puesto: data.puesto || ''
+          puesto: data.puesto || '',
+          email: data.email || ''
         });
       }).catch(err => {
         console.error("Error al obtener empleado:", err);
@@ -166,6 +168,22 @@ export default function ProfilePage() {
               )}
             </div>
             
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><User size={14}/> Email / UPN</label>
+              {isEditing ? (
+                <input 
+                  type="email" 
+                  className="form-control" 
+                  value={formData.email} 
+                  onChange={e => setFormData({...formData, email: e.target.value})} 
+                />
+              ) : (
+                <div style={{ padding: '10px 14px', background: 'var(--color-bg)', borderRadius: 8, color: 'var(--color-text)' }}>
+                  {formData.email || 'Sin Asignar'}
+                </div>
+              )}
+            </div>
+
             <div className="form-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14}/> Horario Base</label>
               <div style={{ padding: '10px 14px', background: 'var(--color-bg)', borderRadius: 8, color: 'var(--color-text-muted)' }}>

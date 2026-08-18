@@ -49,10 +49,12 @@ echo  Para autocompletar su informacion al crear el usuario.
 set /p USER_DEPTO="  Ingrese su Departamento (ej. Recursos Humanos): "
 set /p USER_PUESTO="  Ingrese su Puesto (ej. Analista): "
 set /p USER_NOMBRE="  Ingrese su Nombre Completo: "
+set /p USER_EMAIL="  Ingrese su Email / UPN: "
 
 if not "%USER_DEPTO%"=="" setx USER_DEPARTAMENTO "%USER_DEPTO%" >nul
 if not "%USER_PUESTO%"=="" setx USER_PUESTO "%USER_PUESTO%" >nul
 if not "%USER_NOMBRE%"=="" setx USER_NOMBRE_COMPLETO "%USER_NOMBRE%" >nul
+if not "%USER_EMAIL%"=="" setx USER_EMAIL "%USER_EMAIL%" >nul
 echo        Perfil configurado correctamente en el sistema.
 
 echo.
