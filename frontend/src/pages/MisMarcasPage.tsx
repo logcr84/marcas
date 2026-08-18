@@ -149,14 +149,14 @@ export default function MisMarcasPage() {
                   </table>
                 </div>
               )}
+              {marcas.length > 0 && (
+                <Pagination 
+                  currentPage={currentPage} 
+                  totalPages={Math.ceil(marcas.length / 10)} 
+                  onPageChange={setCurrentPage} 
+                />
+              )}
             </div>
-            {marcas.length > 0 && (
-              <Pagination 
-                currentPage={currentPage} 
-                totalPages={Math.ceil(marcas.length / 10)} 
-                onPageChange={setCurrentPage} 
-              />
-            )}
           </>
         )}
       </div>

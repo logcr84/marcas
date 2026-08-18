@@ -201,7 +201,7 @@ export default function ReportesPage() {
                       </PieChart>
                     </ResponsiveContainer>
                     <div style={{ position: 'absolute', top: 'calc(50% - 18px)', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                      <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1 }}>{resultado.total}</div>
+                      <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1 }}>{marcasFiltradas.length}</div>
                       <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 4 }}>Total</div>
                     </div>
                   </div>
@@ -230,7 +230,7 @@ export default function ReportesPage() {
               <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
                 <h3 style={{ fontSize: 15, fontWeight: 600 }}>Registro Detallado</h3>
                 <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
-                  {resultado.total} evento(s)
+                  {marcasFiltradas.length} evento(s)
                 </span>
               </div>
               {marcasFiltradas.length === 0 ? (
@@ -268,14 +268,14 @@ export default function ReportesPage() {
                   </table>
                 </div>
               )}
+              {marcasFiltradas.length > 0 && (
+                <Pagination 
+                  currentPage={currentPage} 
+                  totalPages={Math.ceil(marcasFiltradas.length / 10)} 
+                  onPageChange={setCurrentPage} 
+                />
+              )}
             </div>
-            {marcasFiltradas.length > 0 && (
-              <Pagination 
-                currentPage={currentPage} 
-                totalPages={Math.ceil(marcasFiltradas.length / 10)} 
-                onPageChange={setCurrentPage} 
-              />
-            )}
           </>
         )}
       </div>
