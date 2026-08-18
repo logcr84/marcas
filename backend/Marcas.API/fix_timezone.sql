@@ -25,10 +25,10 @@ RETURNS TABLE(
     "TipoMarca" character varying, 
     "NombreTipoMarca" character varying, 
     "EstadoMarca" character varying, 
-    "ObservacionTecnica" text,
+    "ObservacionTecnica" character varying,
     "JustificacionID" bigint,
     "EstadoJustificacion" character varying,
-    "TextoJustificacion" text,
+    "TextoJustificacion" character varying,
     "MotivoJustificacion" character varying
 )
 LANGUAGE plpgsql
@@ -91,10 +91,10 @@ RETURNS TABLE(
     "TipoMarca" character varying, 
     "NombreTipoMarca" character varying, 
     "EstadoMarca" character varying, 
-    "ObservacionTecnica" text,
+    "ObservacionTecnica" character varying,
     "JustificacionID" bigint,
     "EstadoJustificacion" character varying,
-    "TextoJustificacion" text,
+    "TextoJustificacion" character varying,
     "MotivoJustificacion" character varying
 )
 LANGUAGE plpgsql
