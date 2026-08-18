@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { empleadosApi } from '../api/marcas';
 import { Pagination } from '../components/Pagination';
 import type { EmpleadoResponse } from '../api/marcas';
-import { Search, Users, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Search, Users, TrendingUp, TrendingDown, Minus, Eye, X } from 'lucide-react';
 
 function KpiCard({ title, value, trend, trendValue, trendUpIsGood = true }: { title: string, value: string | number, trend: 'up' | 'down' | 'neutral', trendValue: string, trendUpIsGood?: boolean }) {
   const isUp = trend === 'up';
@@ -36,6 +36,7 @@ export default function EmpleadosPage() {
   const [busqueda, setBusqueda] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<EmpleadoResponse | null>(null);
 
   const cargar = async (b?: string) => {
     setLoading(true);
@@ -121,6 +122,7 @@ export default function EmpleadosPage() {
                     <th>Departamento</th>
                     <th>Puesto</th>
                     <th style={{ width: 100 }}>Estado</th>
+                    <th style={{ width: 80, textAlign: 'center' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -131,6 +133,17 @@ export default function EmpleadosPage() {
                       <td style={{ color: 'var(--color-text-muted)' }}>{e.departamento}</td>
                       <td style={{ color: 'var(--color-text-muted)' }}>{e.puesto}</td>
                       <td>{estadoBadge(e.estado)}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          className="btn-dropdown-trigger"
+                          onClick={() => setEmpleadoSeleccionado(e)}
+                          title="Ver detalle"
+                          style={{ margin: '0 auto' }}
+                        >
+                          <Eye size={16} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -141,6 +154,54 @@ export default function EmpleadosPage() {
               totalPages={Math.ceil(lista.length / 10)} 
               onPageChange={setCurrentPage} 
             />
+          </div>
+        )}
+
+        {empleadoSeleccionado && (
+          <div className="modal-overlay" onClick={() => setEmpleadoSeleccionado(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3 className="modal-title">Detalle del Empleado</h3>
+                <button className="btn-close" onClick={() => setEmpleadoSeleccionado(null)}>
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="modal-form">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Código</label>
+                    <div className="form-input" style={{ background: 'transparent', borderColor: 'transparent', padding: '8px 0' }}>{empleadoSeleccionado.codigoEmpleado}</div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Estado</label>
+                    <div style={{ padding: '8px 0' }}>{estadoBadge(empleadoSeleccionado.estado)}</div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Nombre Completo</label>
+                  <div className="form-input" style={{ background: 'transparent', borderColor: 'transparent', padding: '8px 0', fontWeight: 500 }}>{empleadoSeleccionado.nombreCompleto}</div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Departamento</label>
+                    <div className="form-input" style={{ background: 'transparent', borderColor: 'transparent', padding: '8px 0' }}>{empleadoSeleccionado.departamento}</div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Puesto</label>
+                    <div className="form-input" style={{ background: 'transparent', borderColor: 'transparent', padding: '8px 0' }}>{empleadoSeleccionado.puesto}</div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Correo Electrónico</label>
+                  <div className="form-input" style={{ background: 'transparent', borderColor: 'transparent', padding: '8px 0' }}>{empleadoSeleccionado.email || 'No registrado'}</div>
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button className="btn btn-secondary" onClick={() => setEmpleadoSeleccionado(null)}>
+                  Cerrar
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
