@@ -34,7 +34,7 @@ AS $function$
  END;
  $function$;
 
-CREATE OR REPLACE FUNCTION asistencia.fn_reportemarcasempleado(p_empleadoid integer, p_fechainicio date, p_fechafin date)
+CREATE OR REPLACE FUNCTION asistencia.fn_reportemarcasempleado(p_empleadoid bigint, p_fechainicio date, p_fechafin date)
  RETURNS TABLE("MarcaID" bigint, "FechaHoraServidor" timestamp with time zone, "TipoMarca" character varying, "NombreTipoMarca" character varying, "EstadoMarca" character varying, "EstadoJustificacion" character varying, "TextoJustificacion" text, "MotivoJustificacion" character varying)
  LANGUAGE plpgsql
 AS $function$
