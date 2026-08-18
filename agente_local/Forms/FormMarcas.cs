@@ -83,10 +83,6 @@ public class FormMarcas : Form
         AutoSizeMode    = AutoSizeMode.GrowAndShrink;
         Padding         = new Padding(16);
 
-        // Posicionar cerca del reloj (esquina inferior derecha)
-        var workArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1920, 1080);
-        Location = new Point(workArea.Right - Width - 12, workArea.Bottom - 430);
-
         // ── Panel principal ───────────────────────────────────────────
         var panel = new FlowLayoutPanel
         {
@@ -153,6 +149,16 @@ public class FormMarcas : Form
 
         // Cerrar al perder el foco
         Deactivate += (s, e) => Close();
+    }
+
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+        
+        // Posicionar cerca del reloj (esquina inferior derecha)
+        // Se hace en OnLoad para asegurar que el AutoSize ya calculó el Height real.
+        var workArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1920, 1080);
+        Location = new Point(workArea.Right - Width - 12, workArea.Bottom - Height - 12);
     }
 
     private Control CrearBoton(string emoji, string nombre, string detalle, Color color, byte tipoMarcaId, string codigo)
