@@ -1,10 +1,12 @@
 using System;
+using System.IO;
 using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Marcas.Agent.Worker.Data;
 using Marcas.Agent.Worker.Services;
 using Marcas.Agent.Worker;
+using Serilog;
 
 namespace Marcas.Agent.Worker;
 
@@ -15,29 +17,51 @@ static class Program
     {
         ApplicationConfiguration.Initialize();
 
-        var builder = Host.CreateApplicationBuilder(args);
+        // Configurar Serilog para guardar logs en AppData/Local/MarcasAgent/logs/
+        string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MarcasAgent", "logs");
+        Directory.CreateDirectory(logDir);
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(Path.Combine(logDir, "agente_.txt"), rollingInterval: RollingInterval.Day)
+            .CreateLogger();
 
-        // ── Sesión compartida: se llena tras el auto-login ────────────
-        builder.Services.AddSingleton<AgentSession>();
+        Log.Information("Iniciando Agente de Marcas...");
 
-        // ── Base de datos local SQLite ─────────────────────────────────
-        builder.Services.AddSingleton<LocalDb>();
+        try
+        {
+            var builder = Host.CreateApplicationBuilder(args);
 
-        // ── Servicio de marcas manuales (bandeja) ──────────────────────
-        builder.Services.AddSingleton<MarcaManualService>();
+            // Integrar Serilog
+            builder.Services.AddSerilog();
 
-        // ── HttpClient para SyncService ────────────────────────────────
-        builder.Services.AddHttpClient<SyncService>();
+            // ── Sesión compartida: se llena tras el auto-login ────────────
+            builder.Services.AddSingleton<AgentSession>();
 
-        // ── Workers (Background Services) ─────────────────────────────
-        // SyncService arranca primero: autentica y llena AgentSession
-        // ActivityMonitor espera a que AgentSession esté lista
-        builder.Services.AddHostedService<SyncService>();
-        builder.Services.AddHostedService<ActivityMonitor>();
+            // ── Base de datos local SQLite ─────────────────────────────────
+            builder.Services.AddSingleton<LocalDb>();
 
-        var host = builder.Build();
+            // ── Servicio de marcas manuales (bandeja) ──────────────────────
+            builder.Services.AddSingleton<MarcaManualService>();
 
-        // ── Iniciar la bandeja del sistema ─────────────────────────────
-        Application.Run(new TrayApplicationContext(host));
+            // ── HttpClient para SyncService ────────────────────────────────
+            builder.Services.AddHttpClient<SyncService>();
+
+            // ── Workers (Background Services) ─────────────────────────────
+            builder.Services.AddHostedService<SyncService>();
+            builder.Services.AddHostedService<ActivityMonitor>();
+
+            var host = builder.Build();
+
+            // ── Iniciar la bandeja del sistema ─────────────────────────────
+            Application.Run(new TrayApplicationContext(host));
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "El agente cerró inesperadamente debido a una excepción no manejada.");
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
     }
 }
