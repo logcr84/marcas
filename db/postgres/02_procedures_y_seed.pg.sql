@@ -43,7 +43,7 @@ BEGIN
     SELECT
         m."MarcaID",
         e."CodigoEmpleado",
-        (e."Nombre" || ' ' || e."PrimerApellido")::TEXT AS "NombreEmpleado",
+        (e."Nombre" || ' ' || e."PrimerApellido" || ' ' || COALESCE(e."SegundoApellido", ''))::TEXT AS "NombreEmpleado",
         m."FechaHoraServidor",
         m."FechaHoraCliente",
         tm."Codigo"      AS "TipoMarca",
@@ -64,8 +64,8 @@ BEGIN
     LEFT JOIN asistencia."MotivoJustificacion" mj
         ON mj."MotivoID" = j."MotivoID"
     WHERE m."EmpleadoID" = p_EmpleadoID
-      AND m."FechaHoraServidor" >= p_FechaInicio::TIMESTAMPTZ
-      AND m."FechaHoraServidor" <  (p_FechaFin + INTERVAL '1 day')::TIMESTAMPTZ
+      AND m."FechaHoraServidor" AT TIME ZONE 'America/Costa_Rica' >= p_FechaInicio::TIMESTAMP
+      AND m."FechaHoraServidor" AT TIME ZONE 'America/Costa_Rica' <  (p_FechaFin + INTERVAL '1 day')::TIMESTAMP
     ORDER BY m."FechaHoraServidor" DESC;
 END;
 $$;
@@ -103,7 +103,7 @@ BEGIN
     SELECT
         m."MarcaID",
         e."CodigoEmpleado",
-        (e."Nombre" || ' ' || e."PrimerApellido")::TEXT AS "NombreEmpleado",
+        (e."Nombre" || ' ' || e."PrimerApellido" || ' ' || COALESCE(e."SegundoApellido", ''))::TEXT AS "NombreEmpleado",
         d."Nombre"    AS "Departamento",
         p."Nombre"    AS "Puesto",
         m."FechaHoraServidor",
@@ -122,8 +122,8 @@ BEGIN
         ON tm."TipoMarcaID" = m."TipoMarcaID"
     LEFT JOIN asistencia."Justificacion" j
         ON j."MarcaID" = m."MarcaID"
-    WHERE m."FechaHoraServidor" >= p_FechaInicio::TIMESTAMPTZ
-      AND m."FechaHoraServidor" <  (p_FechaFin + INTERVAL '1 day')::TIMESTAMPTZ
+    WHERE m."FechaHoraServidor" AT TIME ZONE 'America/Costa_Rica' >= p_FechaInicio::TIMESTAMP
+      AND m."FechaHoraServidor" AT TIME ZONE 'America/Costa_Rica' <  (p_FechaFin + INTERVAL '1 day')::TIMESTAMP
       AND (p_DepartamentoID IS NULL OR e."DepartamentoID" = p_DepartamentoID)
       AND (p_EstadoMarca IS NULL OR m."EstadoMarca" = p_EstadoMarca)
     ORDER BY m."FechaHoraServidor" DESC, e."PrimerApellido";
