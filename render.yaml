@@ -35,6 +35,10 @@ services:
       - key: Cors__AllowedOrigins__0
         value: '*'
 
+      # Secreto para el Agente Local
+      - key: AgentConfig__AgentSecret
+        value: 'AgenteMarcasRECOPE2026!Secreto'
+
     # Health check (opcional pero recomendado — Render lo usa para saber si el servicio está listo)
     healthCheckPath: /scalar/v1
 
