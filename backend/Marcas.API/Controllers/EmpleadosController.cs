@@ -44,4 +44,25 @@ public class EmpleadosController : ControllerBase
         if (empleado is null) return NotFound();
         return Ok(empleado);
     }
+
+    public class UpdatePerfilRequest
+    {
+        public string CodigoEmpleado { get; set; } = string.Empty;
+        public string NombreCompleto { get; set; } = string.Empty;
+        public string Departamento { get; set; } = string.Empty;
+        public string Puesto { get; set; } = string.Empty;
+    }
+
+    /// <summary>Actualiza el perfil del empleado logueado.</summary>
+    [HttpPut("perfil")]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> ActualizarPerfil([FromBody] UpdatePerfilRequest req)
+    {
+        var empleadoIdClaim = User.FindFirstValue("empleadoId");
+        if (!long.TryParse(empleadoIdClaim, out var empleadoId) || empleadoId <= 0)
+            return Forbid();
+
+        await _empleados.ActualizarPerfilAsync(empleadoId, req.CodigoEmpleado, req.NombreCompleto, req.Departamento, req.Puesto);
+        return NoContent();
+    }
 }

@@ -151,13 +151,13 @@ public class FormMarcas : Form
         Deactivate += (s, e) => Close();
     }
 
-    protected override void OnLoad(EventArgs e)
+    protected override void OnShown(EventArgs e)
     {
-        base.OnLoad(e);
+        base.OnShown(e);
         
-        // Posicionar cerca del reloj (esquina inferior derecha)
-        // Se hace en OnLoad para asegurar que el AutoSize ya calculó el Height real.
-        var workArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1920, 1080);
+        // Posicionar cerca del reloj (esquina inferior derecha) de la pantalla donde esté el cursor
+        // Se hace en OnShown para asegurar que el AutoSize ya calculó el Width/Height real con DPI Scaling.
+        var workArea = Screen.FromPoint(Cursor.Position).WorkingArea;
         Location = new Point(workArea.Right - Width - 12, workArea.Bottom - Height - 12);
     }
 

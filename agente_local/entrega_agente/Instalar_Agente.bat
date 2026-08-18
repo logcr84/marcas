@@ -22,7 +22,7 @@ set "STARTUP_DIR=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
 set "EXE_NAME=Marcas.Agent.Worker.exe"
 set "SHORTCUT_NAME=AgenteMarcas.lnk"
 
-echo  [1/4] Creando directorio de instalacion...
+echo  [1/5] Creando directorio de instalacion...
 if not exist "%INSTALL_DIR%" (
     mkdir "%INSTALL_DIR%"
     echo        Creado: %INSTALL_DIR%
@@ -31,7 +31,7 @@ if not exist "%INSTALL_DIR%" (
 )
 
 echo.
-echo  [2/4] Copiando archivos del agente...
+echo  [2/5] Copiando archivos del agente...
 copy /Y "%~dp0%EXE_NAME%" "%INSTALL_DIR%\%EXE_NAME%" >nul
 if errorlevel 1 (
     echo        ERROR: No se pudo copiar %EXE_NAME%.
@@ -44,7 +44,19 @@ copy /Y "%~dp0appsettings.json" "%INSTALL_DIR%\appsettings.json" >nul
 echo        Archivos copiados correctamente.
 
 echo.
-echo  [3/4] Configurando inicio automatico con Windows...
+echo  [3/5] Configuracion de Perfil del Usuario...
+echo  Para autocompletar su informacion al crear el usuario.
+set /p USER_DEPTO="  Ingrese su Departamento (ej. Recursos Humanos): "
+set /p USER_PUESTO="  Ingrese su Puesto (ej. Analista): "
+set /p USER_NOMBRE="  Ingrese su Nombre Completo: "
+
+if not "%USER_DEPTO%"=="" setx USER_DEPARTAMENTO "%USER_DEPTO%" >nul
+if not "%USER_PUESTO%"=="" setx USER_PUESTO "%USER_PUESTO%" >nul
+if not "%USER_NOMBRE%"=="" setx USER_NOMBRE_COMPLETO "%USER_NOMBRE%" >nul
+echo        Perfil configurado correctamente en el sistema.
+
+echo.
+echo  [4/5] Configurando inicio automatico con Windows...
 
 :: Crear acceso directo en la carpeta Startup usando PowerShell
 powershell -NoProfile -Command ^
@@ -64,7 +76,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo  [4/4] Instalacion completada.
+echo  [5/5] Instalacion completada.
 echo.
 echo  ================================================
 echo   El agente se conecta automaticamente usando

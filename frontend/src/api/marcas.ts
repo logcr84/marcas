@@ -70,6 +70,10 @@ export const justificacionesApi = {
 };
 
 export const empleadosApi = {
-  listar: (busqueda?: string) =>
+  listar: (busqueda?: string) => 
     api.get<EmpleadoResponse[]>('/empleados', { params: { busqueda } }).then(r => r.data),
+  obtenerPorId: (id: number) =>
+    api.get<EmpleadoResponse>(`/empleados/${id}`).then(r => r.data),
+  actualizarPerfil: (data: { codigoEmpleado: string; nombreCompleto: string; departamento: string; puesto: string }) =>
+    api.put('/empleados/perfil', data).then(r => r.data),
 };

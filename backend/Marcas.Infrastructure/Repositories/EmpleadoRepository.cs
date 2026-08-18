@@ -77,7 +77,6 @@ public class EmpleadoRepository : IEmpleadoRepository
         var puestoId = await conn.ExecuteScalarAsync<int>(sqlPuesto, new { Nombre = nombrePuesto });
 
         // 3. Crear el empleado temporal
-        var codigo = $"AUTO-{loginWindows.ToUpper()}";
         var identificacion = Guid.NewGuid().ToString()[..15]; // temporal
         
         // Split de Nombre Completo si viene
@@ -95,18 +94,74 @@ public class EmpleadoRepository : IEmpleadoRepository
                 "CodigoEmpleado", "Identificacion", "Nombre", "PrimerApellido", 
                 "DepartamentoID", "PuestoID", "FechaIngreso", "Estado"
             ) VALUES (
-                @Codigo, @Identificacion, @Nombre, @Apellido, 
+                'TEMP', @Identificacion, @Nombre, @Apellido, 
                 @Depto, @Puesto, CURRENT_DATE, 'ACTIVO'
             ) RETURNING "EmpleadoID";
             """;
-
-        return await conn.ExecuteScalarAsync<long>(sqlEmpleado, new {
-            Codigo = codigo,
+        var empId = await conn.ExecuteScalarAsync<long>(sqlEmpleado, new
+        {
             Identificacion = identificacion,
             Nombre = nombreFinal,
             Apellido = apellidoFinal,
             Depto = deptoId,
             Puesto = puestoId
+        });
+
+        // Generar código estandarizado basado en el ID
+        var codigoFinal = $"EMP-{empId:D3}";
+        await conn.ExecuteAsync("UPDATE rrhh.\"Empleado\" SET \"CodigoEmpleado\" = @Codigo WHERE \"EmpleadoID\" = @EmpId", new { Codigo = codigoFinal, EmpId = empId });
+
+        return empId;
+    }
+
+    public async Task ActualizarPerfilAsync(long empleadoId, string codigoEmpleado, string nombreCompleto, string departamento, string puesto)
+    {
+        using var conn = _factory.CreateConnection();
+
+        // Asegurar o buscar el departamento
+        const string sqlDepto = """
+            INSERT INTO rrhh."Departamento" ("Nombre", "Estado") 
+            VALUES (@Nombre, 'ACTIVO') 
+            ON CONFLICT ("Nombre") DO UPDATE SET "Estado" = 'ACTIVO'
+            RETURNING "DepartamentoID";
+            """;
+        var deptoId = await conn.ExecuteScalarAsync<int>(sqlDepto, new { Nombre = departamento });
+
+        // Asegurar o buscar el puesto
+        const string sqlPuesto = """
+            INSERT INTO rrhh."Puesto" ("Nombre", "Estado") 
+            VALUES (@Nombre, 'ACTIVO') 
+            ON CONFLICT ("Nombre") DO UPDATE SET "Estado" = 'ACTIVO'
+            RETURNING "PuestoID";
+            """;
+        var puestoId = await conn.ExecuteScalarAsync<int>(sqlPuesto, new { Nombre = puesto });
+
+        // Split de Nombre Completo
+        var nombreFinal = nombreCompleto;
+        var apellidoFinal = "";
+        var partes = nombreCompleto.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length > 0) nombreFinal = partes[0];
+        if (partes.Length > 1) apellidoFinal = partes[1];
+
+        const string sqlUpdate = """
+            UPDATE rrhh."Empleado"
+            SET "CodigoEmpleado" = @Codigo,
+                "Nombre" = @Nombre,
+                "PrimerApellido" = @Apellido,
+                "SegundoApellido" = NULL,
+                "DepartamentoID" = @DeptoId,
+                "PuestoID" = @PuestoId
+            WHERE "EmpleadoID" = @EmpleadoId;
+            """;
+
+        await conn.ExecuteAsync(sqlUpdate, new
+        {
+            Codigo = codigoEmpleado,
+            Nombre = nombreFinal,
+            Apellido = apellidoFinal,
+            DeptoId = deptoId,
+            PuestoId = puestoId,
+            EmpleadoId = empleadoId
         });
     }
 }
