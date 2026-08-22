@@ -6,6 +6,7 @@
 -- ============================================================
 -- FUNCIÓN: Reporte de Marcas por Empleado (máx 6 meses)
 -- ============================================================
+DROP FUNCTION IF EXISTS asistencia.fn_ReporteMarcasEmpleado(bigint, date, date);
 CREATE OR REPLACE FUNCTION asistencia.fn_ReporteMarcasEmpleado(
     p_EmpleadoID  BIGINT,
     p_FechaInicio DATE,
@@ -73,6 +74,7 @@ $$;
 -- ============================================================
 -- FUNCIÓN: Reporte General de Marcas (RRHH/Jefatura)
 -- ============================================================
+DROP FUNCTION IF EXISTS asistencia.fn_ReporteGeneralMarcas(date, date, integer, character varying);
 CREATE OR REPLACE FUNCTION asistencia.fn_ReporteGeneralMarcas(
     p_FechaInicio    DATE,
     p_FechaFin       DATE,
